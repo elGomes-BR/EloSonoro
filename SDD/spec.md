@@ -47,7 +47,7 @@ Fluxo condicional executado ao tocar em uma placa:
 
 ### 3.2 Grade de Acessibilidade Motora
 * A interface (UI) da prancha de comunicação deve possuir controle de densidade visual.
-* Valores permitidos para exibição simultânea na tela: 2, 4, 8 ou 16 placas.
+* A interface deve exibir uma grade de exibição flexível. Os layouts permitidos por tela são estritamente: 2 colunas ou 4 colunas, com rolagem vertical.
 
 ## 4. Integração e Sincronização
 

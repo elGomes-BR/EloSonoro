@@ -26,7 +26,10 @@ interface UserPreferences {
  * - Controla a quantidade de colunas na grade (spanCount: 2, 4, 8, 16).
  * - Mantém a seleção da categoria ativa.
  */
-class PreferencesManager(context: Context) : UserPreferences {
+class PreferencesManager(
+    context: Context? = null,
+    injectedPrefs: SharedPreferences? = null
+) : UserPreferences {
 
     companion object {
         private const val PREFS_NAME = "elo_sonoro_prefs"
@@ -38,7 +41,8 @@ class PreferencesManager(context: Context) : UserPreferences {
     }
 
     private val sharedPreferences: SharedPreferences =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        injectedPrefs ?: context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        ?: error("Context ou SharedPreferences deve ser fornecido para PreferencesManager")
 
     private val _spanCount = MutableStateFlow(
         sharedPreferences.getInt(KEY_SPAN_COUNT, DEFAULT_SPAN_COUNT)
@@ -58,7 +62,7 @@ class PreferencesManager(context: Context) : UserPreferences {
     override fun getSpanCount(): Int = _spanCount.value
 
     override fun setSpanCount(spanCount: Int) {
-        val validSpan = if (spanCount in listOf(2, 4, 8, 16)) spanCount else DEFAULT_SPAN_COUNT
+        val validSpan = if (spanCount in listOf(2, 4)) spanCount else DEFAULT_SPAN_COUNT
         sharedPreferences.edit().putInt(KEY_SPAN_COUNT, validSpan).apply()
         _spanCount.value = validSpan
     }

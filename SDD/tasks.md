@@ -43,3 +43,6 @@ Lista de tarefas pendentes.
 - [ ] Implementar empacotamento completo (arquivos físicos + `.db`, `-wal`, `-shm`).
 - [ ] Implementar desempacotamento e reestabilização do banco de dados Room.
 - [ ] Conectar funções de backup à interface do usuário.
+
+## Refatoração 1: Correção da Spec 3.2
+- [x] Alterar layout de exibição das placas para 2 colunas ou 4 colunas com rolagem vertical. O usuário deve poder alternar entre os dois modos.

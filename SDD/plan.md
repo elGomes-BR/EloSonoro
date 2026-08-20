@@ -40,4 +40,4 @@ Para atender à especificação de relação N:M (Placas e Perfis) e telemetria:
 
 ## 7. Controle de UI e Estados
 * **StateFlow/LiveData:** A UI assinará um `ModeState` (Booleano: `isEditMode`). Componentes de deleção/edição observarão este estado para alterar propriedade `visibility` e desabilitar `onClickListener`.
-* **Acessibilidade Motora (Grid):** O `RecyclerView` da prancha utilizará `GridLayoutManager`. O `spanCount` será dinâmico (2, 4, 8, 16) gerenciado por uma configuração salva em `SharedPreferences` ou `DataStore`.
+* **Acessibilidade Motora (Grid):** O `RecyclerView` da prancha utilizará `GridLayoutManager`. O `spanCount` será dinâmico (2 ou 4) gerenciado por uma configuração salva em `SharedPreferences` ou `DataStore`.

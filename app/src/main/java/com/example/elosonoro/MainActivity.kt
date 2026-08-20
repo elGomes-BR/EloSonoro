@@ -243,10 +243,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSpanCountDialog() {
-        val options = arrayOf("2 Colunas (Acessibilidade Ampla)", "4 Colunas (Padrão)", "8 Colunas (Intermediário)", "16 Colunas (Compacto)")
-        val spanValues = intArrayOf(2, 4, 8, 16)
+        val options = arrayOf("2 Colunas (Acessibilidade Ampla)", "4 Colunas (Padrão)")
+        val spanValues = intArrayOf(2, 4)
         val currentSpan = viewModel.uiState.value.spanCount
-        val checkedIndex = spanValues.indexOf(currentSpan).coerceAtLeast(1)
+        val checkedIndex = if (currentSpan == 2) 0 else 1
 
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.grid_columns)
