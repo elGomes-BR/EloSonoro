@@ -5,6 +5,7 @@ import com.example.elosonoro.di.databaseModule
 import com.example.elosonoro.di.mediaModule
 import com.example.elosonoro.di.networkModule
 import com.example.elosonoro.di.repositoryModule
+import com.example.elosonoro.di.uiModule
 import com.example.elosonoro.di.useCaseModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -25,7 +26,8 @@ class EloSonoroApp : Application() {
                     mediaModule,
                     networkModule,
                     repositoryModule,
-                    useCaseModule
+                    useCaseModule,
+                    uiModule
                 )
             )
         }

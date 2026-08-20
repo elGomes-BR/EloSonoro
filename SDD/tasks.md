@@ -31,12 +31,12 @@ Lista de tarefas pendentes.
 - [x] Implementar rotina de coleta de métricas ocultas (gravação no `TelemetryEntity`).
 
 ## Fase 6: Camada de Interface de Usuário (UI)
-- [ ] Criar ViewModels para controle de estado via `StateFlow`.
-- [ ] Implementar `ModeState` (Modo Edição vs Modo de Uso).
-- [ ] Implementar UI da prancha principal com `RecyclerView`/`GridLayoutManager`.
-- [ ] Adicionar controle dinâmico de `spanCount` (2, 4, 8, 16) via SharedPreferences/DataStore.
-- [ ] Implementar telas/diálogos de criação e edição bloqueando submissões com campos vazios (validação estrita do `spec.md`).
-- [ ] Vincular cliques na placa à execução de áudio/TTS.
+- [x] Criar ViewModels para controle de estado via `StateFlow`.
+- [x] Implementar `ModeState` (Modo Edição vs Modo de Uso).
+- [x] Implementar UI da prancha principal com `RecyclerView`/`GridLayoutManager`.
+- [x] Adicionar controle dinâmico de `spanCount` (2, 4, 8, 16) via SharedPreferences/DataStore.
+- [x] Implementar telas/diálogos de criação e edição bloqueando submissões com campos vazios (validação estrita do `spec.md`).
+- [x] Vincular cliques na placa à execução de áudio/TTS.
 
 ## Fase 7: Sistema de Sincronização
 - [ ] Criar rotina utilitária `BackupManager` com `ZipOutputStream`.

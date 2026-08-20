@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">EloSonoro</string>
+    <string name="all_plates">Todas as Placas</string>
+    <string name="mode_use">Modo de Uso</string>
+    <string name="mode_edit">Modo de Edição</string>
+    <string name="search_hint">Pesquisar placa por nome...</string>
+    <string name="add_plate">Nova Placa</string>
+    <string name="add_category">Nova Categoria</string>
+    <string name="grid_columns">Colunas da Grade</string>
+    <string name="name_required">O nome é obrigatório</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Excluir</string>
+    <string name="edit">Editar</string>
+    <string name="no_plates_found">Nenhuma placa encontrada nesta prancha.</string>
 </resources>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/txtProfileDialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/add_category"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_primary"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Nome da Categoria (Obrigatório e Único) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/inputLayoutProfileName"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nome da Categoria *"
+        app:errorEnabled="true"
+        android:layout_marginBottom="12dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edtProfileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapSentences"
+            android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Vincular placas a esta categoria:"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@color/md_on_surface"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Lista de Placas Disponíveis -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerPlateSelection"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="@color/md_background"
+        android:padding="4dp"
+        tools:listitem="@layout/item_plate_selection" />
+
+    <!-- Botões de Ação -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelProfile"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveProfile"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/save" />
+    </LinearLayout>
+
+</LinearLayout>

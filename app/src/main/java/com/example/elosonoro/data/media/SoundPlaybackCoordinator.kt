@@ -10,7 +10,7 @@ import com.example.elosonoro.data.local.entity.PlateEntity
  * 2. Se existir, reproduz o arquivo de áudio via AudioPlayerManager (SoundPool).
  * 3. Se não existir (ou a reprodução do arquivo falhar), aciona o Text-to-Speech (TTS) com o Nome da placa.
  */
-class SoundPlaybackCoordinator(
+open class SoundPlaybackCoordinator(
     private val localFileManager: FileManager,
     private val audioPlayer: AudioPlayer,
     private val ttsPlayer: TtsPlayer
@@ -23,7 +23,7 @@ class SoundPlaybackCoordinator(
     /**
      * Executa a reprodução sonora para uma entidade Placa.
      */
-    suspend fun playPlate(plate: PlateEntity): Boolean {
+    open suspend fun playPlate(plate: PlateEntity): Boolean {
         return play(plateName = plate.name, audioUri = plate.audioUri)
     }
 
@@ -33,7 +33,7 @@ class SoundPlaybackCoordinator(
      * @param audioUri URI ou caminho físico do áudio (opcional).
      * @return true se algum som foi reproduzido (áudio gravado ou TTS), false se ambos falharam.
      */
-    suspend fun play(plateName: String, audioUri: String?): Boolean {
+    open suspend fun play(plateName: String, audioUri: String?): Boolean {
         if (plateName.isBlank()) {
             Log.w(TAG, "Tentativa de reprodução com nome de placa vazio.")
             return false
