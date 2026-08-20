@@ -21,9 +21,9 @@ Lista de tarefas pendentes.
 - [x] Integrar `AudioPlayerManager` e `TtsManager` no fluxo condicional (se áudio local falhar, aciona TTS).
 
 ## Fase 4: Integração Externa (ARASAAC)
-- [ ] Definir modelos de dados JSON da API ARASAAC.
-- [ ] Criar interface Retrofit para os endpoints de busca de pictogramas.
-- [ ] Implementar repositório e rotina de download do `InputStream` e salvamento via `LocalFileManager`.
+- [x] Definir modelos de dados JSON da API ARASAAC.
+- [x] Criar interface Retrofit para os endpoints de busca de pictogramas.
+- [x] Implementar repositório e rotina de download do `InputStream` e salvamento via `LocalFileManager`.
 
 ## Fase 5: Repositórios e Casos de Uso
 - [ ] Implementar repositório central unindo Room e LocalFileManager para salvar Placas (garantindo persistência física antes do banco).
