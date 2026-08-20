@@ -102,7 +102,9 @@ class SoundPlaybackCoordinatorTest {
         override fun getImagesDirectory(): File = File("/tmp/images")
         override fun getAudioDirectory(): File = File("/tmp/audio")
         override fun saveImage(sourceUri: Uri): String = "img_saved.png"
+        override fun saveImage(sourceUriString: String): String = "img_saved.png"
         override fun saveAudio(sourceUri: Uri): String = "audio_saved.mp3"
+        override fun saveAudio(sourceUriString: String): String = "audio_saved.mp3"
         override fun saveImageStream(inputStream: InputStream, extension: String): String = "img_stream.$extension"
         override fun saveAudioStream(inputStream: InputStream, extension: String): String = "audio_stream.$extension"
         override fun fileExists(pathOrUri: String?): Boolean = pathOrUri in existingFiles

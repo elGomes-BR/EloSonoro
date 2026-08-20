@@ -12,7 +12,9 @@ interface FileManager {
     fun getImagesDirectory(): File
     fun getAudioDirectory(): File
     fun saveImage(sourceUri: Uri): String
+    fun saveImage(sourceUriString: String): String
     fun saveAudio(sourceUri: Uri): String
+    fun saveAudio(sourceUriString: String): String
     fun saveImageStream(inputStream: InputStream, extension: String = "png"): String
     fun saveAudioStream(inputStream: InputStream, extension: String = "mp3"): String
     fun fileExists(pathOrUri: String?): Boolean
@@ -54,6 +56,21 @@ class LocalFileManager(
         return saveImageStream(inputStream, extension)
     }
 
+    override fun saveImage(sourceUriString: String): String {
+        return try {
+            val uri = Uri.parse(sourceUriString)
+            saveImage(uri)
+        } catch (e: Exception) {
+            val file = getFile(sourceUriString)
+            if (file != null && file.exists()) {
+                val extension = file.extension.ifBlank { "png" }
+                saveImageStream(file.inputStream(), extension)
+            } else {
+                throw IllegalArgumentException("Arquivo/URI inválido: $sourceUriString", e)
+            }
+        }
+    }
+
     /**
      * Copia um áudio de uma URI de origem (gravador, arquivo, etc.) para o armazenamento interno.
      * @return Caminho absoluto do arquivo local salvo.
@@ -63,6 +80,21 @@ class LocalFileManager(
         val inputStream = context?.contentResolver?.openInputStream(sourceUri)
             ?: throw IllegalArgumentException("Não foi possível abrir o InputStream da URI: $sourceUri")
         return saveAudioStream(inputStream, extension)
+    }
+
+    override fun saveAudio(sourceUriString: String): String {
+        return try {
+            val uri = Uri.parse(sourceUriString)
+            saveAudio(uri)
+        } catch (e: Exception) {
+            val file = getFile(sourceUriString)
+            if (file != null && file.exists()) {
+                val extension = file.extension.ifBlank { "mp3" }
+                saveAudioStream(file.inputStream(), extension)
+            } else {
+                throw IllegalArgumentException("Arquivo/URI inválido: $sourceUriString", e)
+            }
+        }
     }
 
     /**

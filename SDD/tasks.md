@@ -26,9 +26,9 @@ Lista de tarefas pendentes.
 - [x] Implementar repositório e rotina de download do `InputStream` e salvamento via `LocalFileManager`.
 
 ## Fase 5: Repositórios e Casos de Uso
-- [ ] Implementar repositório central unindo Room e LocalFileManager para salvar Placas (garantindo persistência física antes do banco).
-- [ ] Implementar repositório de Perfis com a lógica de associação de placas no ato da criação.
-- [ ] Implementar rotina de coleta de métricas ocultas (gravação no `TelemetryEntity`).
+- [x] Implementar repositório central unindo Room e LocalFileManager para salvar Placas (garantindo persistência física antes do banco).
+- [x] Implementar repositório de Perfis com a lógica de associação de placas no ato da criação.
+- [x] Implementar rotina de coleta de métricas ocultas (gravação no `TelemetryEntity`).
 
 ## Fase 6: Camada de Interface de Usuário (UI)
 - [ ] Criar ViewModels para controle de estado via `StateFlow`.
