@@ -8,11 +8,11 @@ Lista de tarefas pendentes.
 - [x] Implementar classe base do banco de dados `EloSonoroDatabase` (Room).
 
 ## Fase 2: Camada de Dados (Room)
-- [ ] Criar `PlateEntity`, `ProfileEntity`, `TelemetryEntity`.
-- [ ] Criar entidade associativa `PlateProfileCrossRef` (chave primária composta).
-- [ ] Implementar `PlateDao` (incluindo busca por nome `LIKE`).
-- [ ] Implementar `ProfileDao` (com tratamento de conflito `UNIQUE`).
-- [ ] Implementar `CrossRefDao` (queries de junção N:M).
+- [x] Criar `PlateEntity`, `ProfileEntity`, `TelemetryEntity`.
+- [x] Criar entidade associativa `PlateProfileCrossRef` (chave primária composta).
+- [x] Implementar `PlateDao` (incluindo busca por nome `LIKE`).
+- [x] Implementar `ProfileDao` (com tratamento de conflito `UNIQUE`).
+- [x] Implementar `CrossRefDao` (queries de junção N:M).
 
 ## Fase 3: Camada de Arquivos (I/O) e Mídia
 - [ ] Criar `LocalFileManager` para copiar e salvar arquivos no `Context.filesDir` com renomeação via UUID.

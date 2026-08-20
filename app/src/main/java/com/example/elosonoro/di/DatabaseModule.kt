@@ -12,7 +12,12 @@ val databaseModule = module {
             EloSonoroDatabase::class.java,
             EloSonoroDatabase.DATABASE_NAME
         )
-        .fallbackToDestructiveMigration()
+        .fallbackToDestructiveMigration(dropAllTables = true)
         .build()
     }
+
+    single { get<EloSonoroDatabase>().plateDao() }
+    single { get<EloSonoroDatabase>().profileDao() }
+    single { get<EloSonoroDatabase>().crossRefDao() }
+    single { get<EloSonoroDatabase>().telemetryDao() }
 }
