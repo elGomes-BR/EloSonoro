@@ -2,10 +2,10 @@
 Lista de tarefas pendentes.
 
 ## Fase 1: Configuração Inicial e Infraestrutura
-- [ ] Configurar projeto Android (Min API 24).
-- [ ] Adicionar dependências no `build.gradle` (Room, Coroutines, Hilt/Koin, Retrofit, ViewModel).
-- [ ] Configurar Injeção de Dependência na classe `Application`.
-- [ ] Implementar classe base do banco de dados `EloSonoroDatabase` (Room).
+- [x] Configurar projeto Android (Min API 24).
+- [x] Adicionar dependências no `build.gradle` (Room, Coroutines, Hilt/Koin, Retrofit, ViewModel).
+- [x] Configurar Injeção de Dependência na classe `Application`.
+- [x] Implementar classe base do banco de dados `EloSonoroDatabase` (Room).
 
 ## Fase 2: Camada de Dados (Room)
 - [ ] Criar `PlateEntity`, `ProfileEntity`, `TelemetryEntity`.
