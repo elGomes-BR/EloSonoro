@@ -15,10 +15,10 @@ Lista de tarefas pendentes.
 - [x] Implementar `CrossRefDao` (queries de junção N:M).
 
 ## Fase 3: Camada de Arquivos (I/O) e Mídia
-- [ ] Criar `LocalFileManager` para copiar e salvar arquivos no `Context.filesDir` com renomeação via UUID.
-- [ ] Implementar `AudioPlayerManager` utilizando `SoundPool` para garantia de latência < 200ms.
-- [ ] Implementar `TtsManager` integrando `TextToSpeech` nativo do Android.
-- [ ] Integrar `AudioPlayerManager` e `TtsManager` no fluxo condicional (se áudio local falhar, aciona TTS).
+- [x] Criar `LocalFileManager` para copiar e salvar arquivos no `Context.filesDir` com renomeação via UUID.
+- [x] Implementar `AudioPlayerManager` utilizando `SoundPool` para garantia de latência < 200ms.
+- [x] Implementar `TtsManager` integrando `TextToSpeech` nativo do Android.
+- [x] Integrar `AudioPlayerManager` e `TtsManager` no fluxo condicional (se áudio local falhar, aciona TTS).
 
 ## Fase 4: Integração Externa (ARASAAC)
 - [ ] Definir modelos de dados JSON da API ARASAAC.

@@ -2,6 +2,7 @@ package com.example.elosonoro
 
 import android.app.Application
 import com.example.elosonoro.di.databaseModule
+import com.example.elosonoro.di.mediaModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -17,7 +18,8 @@ class EloSonoroApp : Application() {
             androidContext(this@EloSonoroApp)
             modules(
                 listOf(
-                    databaseModule
+                    databaseModule,
+                    mediaModule
                 )
             )
         }
