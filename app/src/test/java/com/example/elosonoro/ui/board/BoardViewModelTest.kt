@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -131,45 +130,12 @@ class BoardViewModelTest {
     }
 
     @Test
-    fun testSavePlateSuccessUpdatesPlateListAndInvokesCallback() = runTest(testDispatcher) {
-        var callbackInvoked = false
-        var savedEntity: PlateEntity? = null
-
-        viewModel.savePlate(
-            name = "Água",
-            onSuccess = {
-                callbackInvoked = true
-                savedEntity = it
-            }
-        )
+    fun testSavePlateSuccessUpdatesPlateList() = runTest(testDispatcher) {
+        viewModel.savePlate(name = "Água")
         advanceUntilIdle()
 
-        assertTrue(callbackInvoked)
-        assertNotNull(savedEntity)
-        assertEquals("Água", savedEntity?.name)
         assertEquals(1, fakePlateRepository.platesList.size)
         assertEquals("Água", fakePlateRepository.platesList.first().name)
-    }
-
-    @Test
-    fun testGetAllPlatesReturnsAllRepositoryPlates() = runTest(testDispatcher) {
-        fakePlateRepository.platesList.addAll(
-            listOf(
-                PlateEntity(id = "p-1", name = "Placa 1"),
-                PlateEntity(id = "p-2", name = "Placa 2")
-            )
-        )
-
-        var loadedPlates: List<PlateEntity> = emptyList()
-        val job = launch {
-            viewModel.getAllPlates().collect {
-                loadedPlates = it
-            }
-        }
-        advanceUntilIdle()
-
-        assertEquals(2, loadedPlates.size)
-        job.cancel()
     }
 
     @Test

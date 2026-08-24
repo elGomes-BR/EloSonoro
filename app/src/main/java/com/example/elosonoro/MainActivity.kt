@@ -262,10 +262,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showPlateEditorDialog(
-        plateToEdit: PlateEntity?,
-        onPlateSaved: ((PlateEntity) -> Unit)? = null
-    ) {
+    private fun showPlateEditorDialog(plateToEdit: PlateEntity?) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_plate_editor)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -361,10 +358,7 @@ class MainActivity : AppCompatActivity() {
                 name = name,
                 imageUri = selectedImageUriString,
                 audioUri = selectedAudioUriString,
-                id = plateToEdit?.id,
-                onSuccess = { savedPlate ->
-                    onPlateSaved?.invoke(savedPlate)
-                }
+                id = plateToEdit?.id
             )
             dialog.dismiss()
         }
@@ -414,50 +408,29 @@ class MainActivity : AppCompatActivity() {
         val txtProfileDialogTitle: TextView = dialog.findViewById(R.id.txtProfileDialogTitle)
         val inputLayoutProfileName: TextInputLayout = dialog.findViewById(R.id.inputLayoutProfileName)
         val edtProfileName: TextInputEditText = dialog.findViewById(R.id.edtProfileName)
-        val btnAddNewPlateInProfile: MaterialButton = dialog.findViewById(R.id.btnAddNewPlateInProfile)
-        val edtProfilePlateSearch: TextInputEditText = dialog.findViewById(R.id.edtProfilePlateSearch)
         val recyclerSelection: RecyclerView = dialog.findViewById(R.id.recyclerPlateSelection)
         val btnCancel: MaterialButton = dialog.findViewById(R.id.btnCancelProfile)
         val btnSave: MaterialButton = dialog.findViewById(R.id.btnSaveProfile)
 
-        val selectionAdapter = PlateSelectionAdapter(emptyList(), emptySet())
+        val allPlates = viewModel.uiState.value.plates
         recyclerSelection.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
-        recyclerSelection.adapter = selectionAdapter
 
         if (profileToEdit != null) {
             txtProfileDialogTitle.text = "Editar Categoria"
             edtProfileName.setText(profileToEdit.name)
-        } else {
-            txtProfileDialogTitle.text = getString(R.string.add_category)
-        }
 
-        // Carrega a listagem global de todas as placas cadastradas no sistema (independente do filtro ativo)
-        lifecycleScope.launch {
-            viewModel.getAllPlates().collectLatest { allPlates ->
-                if (profileToEdit != null) {
-                    val linkedPlates = viewModel.getPlatesForProfile(profileToEdit.id).first()
+            // Carrega as placas vinculadas para seleção inicial
+            lifecycleScope.launch {
+                viewModel.getPlatesForProfile(profileToEdit.id).collectLatest { linkedPlates ->
                     val linkedIds = linkedPlates.map { it.id }.toSet()
-                    selectionAdapter.setAllPlates(allPlates, linkedIds)
-                } else {
-                    selectionAdapter.setAllPlates(allPlates)
+                    val selectionAdapter = PlateSelectionAdapter(allPlates, linkedIds)
+                    recyclerSelection.adapter = selectionAdapter
                 }
             }
-        }
-
-        // Busca em tempo real na seleção de placas preservando seleções
-        edtProfilePlateSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                selectionAdapter.filter(s?.toString() ?: "")
-            }
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-        // Atalho para adicionar nova placa diretamente no diálogo de categoria
-        btnAddNewPlateInProfile.setOnClickListener {
-            showPlateEditorDialog(null) { newlyCreatedPlate ->
-                selectionAdapter.addAndSelectPlate(newlyCreatedPlate)
-            }
+        } else {
+            txtProfileDialogTitle.text = getString(R.string.add_category)
+            val selectionAdapter = PlateSelectionAdapter(allPlates, emptySet())
+            recyclerSelection.adapter = selectionAdapter
         }
 
         btnCancel.setOnClickListener { dialog.dismiss() }
@@ -470,7 +443,8 @@ class MainActivity : AppCompatActivity() {
             }
             inputLayoutProfileName.error = null
 
-            val selectedIds = selectionAdapter.getSelectedPlateIds()
+            val selectionAdapter = recyclerSelection.adapter as? PlateSelectionAdapter
+            val selectedIds = selectionAdapter?.getSelectedPlateIds() ?: emptyList()
 
             if (profileToEdit != null) {
                 viewModel.updateProfile(
