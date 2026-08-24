@@ -67,3 +67,14 @@ Lista de tarefas pendentes.
 - [ ] Validar coleta silenciosa de telemetria em segundo plano (`TelemetryEntity`) sem impacto na latência sonora.
 - [ ] Validar reatividade da pesquisa inteligente por nome na prancha principal.
 
+## Refatoração 6: Listagem Global com Busca e Criação Rápida de Placas na Edição de Perfis (Spec 2.5 e Plan 7.4.2)
+- [x] Alimentar a seleção de placas do diálogo de criação/edição de perfil com a totalidade das placas do sistema (independente da categoria ativa).
+- [x] Implementar campo de busca em tempo real no diálogo de seleção de perfil com filtragem preservando o estado dos checkboxes marcados.
+- [x] Implementar atalho ("Nova Placa") no diálogo de criação/edição de perfil permitindo cadastrar uma placa e vinculá-la imediatamente à seleção.
+- [x] Criar testes unitários para a filtragem de busca no adapter de seleção e para a vinculação integrada de novas placas.
+
+## Refatoração 7: Normalização de Nomes para TTS e Sugestão Automática via ARASAAC (Spec 2.2, 2.4 e Plan 4, 5, 7.4.1)
+- [ ] Implementar formatação e sanitização de nomes de placas (primeira letra maiúscula, demais minúsculas) antes da persistência no banco para evitar soletração pelo TTS.
+- [ ] Atualizar o diálogo e repositório ARASAAC para retornar o termo/descrição sugerido pela API ao selecionar um pictograma.
+- [ ] Preencher automaticamente o campo "Nome" no formulário de cadastro/edição de placa com a palavra-chave sugerida pela ARASAAC formatada.
+- [ ] Criar testes unitários para a rotina de capitalização/sanitização de nomes e para o preenchimento automático por termo ARASAAC.

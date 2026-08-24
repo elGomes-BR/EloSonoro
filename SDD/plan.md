@@ -88,6 +88,7 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
   * Garante que o tempo de resposta entre o toque na placa e a emissão sonora seja inferior a 200ms (Constitution - Seção 4).
 * **Motor de Síntese de Voz (`TtsManager`):**
   * Inicialização e configuração do `android.speech.tts.TextToSpeech` nativo com suporte ao idioma pt-BR.
+  * **Otimização Fonética / Prevenção de Soletração:** Para evitar que o TTS soletre acrônimos ou palavras inseridas totalmente em caixa alta (ex: "ÁGUA", "BOLA"), os nomes das placas são normalizados antes da persistência para formato em minúsculo com apenas a primeira letra capitalizada (`name.trim().lowercase().replaceFirstChar { it.titlecase() }`).
 * **Coordenador de Reprodução (`SoundPlaybackCoordinator` / `PlayPlateSoundUseCase`):**
   * Executa o fluxo condicional estipulado na Seção 2.1 da spec:
     1. Verifica se a placa possui `audioUri` configurada e se o arquivo físico correspondente existe e é válido.
@@ -97,12 +98,12 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 
 ## 5. Integração com API Externa (ARASAAC)
 * **Cliente de Rede:** Retrofit 2 + OkHttp + Gson/Moshi Converter.
-* **Fluxo de Busca e Download:**
+* **Fluxo de Busca, Download e Sugestão Gramatical:**
   1. O usuário digita o termo de busca na tela de pesquisa de pictogramas.
   2. O `ArasaacApiService` realiza a consulta GET ao endpoint público de busca (`/pictograms/{locale}/search/{term}`).
-  3. A lista de resultados é exibida em grade no diálogo de seleção ARASAAC.
-  4. Ao selecionar um pictograma, o repositório baixa assincronamente o stream de bytes da imagem (`/pictograms/{id}`).
-  5. O arquivo é persistido fisicamente via `LocalFileManager` no armazenamento interno do app e a URI local resultante é associada ao cadastro da placa.
+  3. A lista de resultados é exibida em grade no diálogo de seleção ARASAAC contendo os pictogramas e seus respectivos termos/palavras-chave em português.
+  4. Ao selecionar um pictograma, o repositório baixa assincronamente o stream de bytes da imagem (`/pictograms/{id}`) e o salva no armazenamento interno via `LocalFileManager`.
+  5. **Sugestão de Nome:** A URI local resultante e o nome/termo do pictograma sugerido pela API são retornados ao formulário de cadastro/edição da placa, preenchendo automaticamente o campo "Nome" com a primeira letra capitalizada para maior corretude gramatical e agilidade.
 
 ## 6. Sincronização, Empacotamento e Backup
 * **Exportação (`BackupManager`):**
@@ -136,9 +137,10 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 #### 7.4.1 Gestão de Placas
 * **Cadastro de Placas:**
   * Validação síncrona obrigatória do campo `name` (bloqueia submissão e emite alerta visual se vazio).
-  * Seleção de imagem (Galeria, Câmera, ARASAAC) e áudio (gravação/seleção), salvando fisicamente no armazenamento interno antes de persistir no banco.
+  * Formatação automática do nome (primeira letra maiúscula, demais minúsculas) para garantir leitura natural pelo TTS.
+  * Seleção de imagem (Galeria, Câmera, ARASAAC com preenchimento automático de termo) e áudio (gravação/seleção), salvando fisicamente no armazenamento interno antes de persistir no banco.
 * **Edição de Placas:**
-  * Permite alteração do nome, substituição ou remoção de imagem e áudio.
+  * Permite alteração do nome (com sanitização e capitalização), substituição ou remoção de imagem e áudio.
   * Se a mídia for substituída ou removida, o sistema deleta fisicamente o arquivo anterior do dispositivo e grava a nova mídia internamente antes de atualizar o Room.
 * **Remoção de Placas:**
   * Diálogo de confirmação para exclusão da placa.
@@ -147,9 +149,16 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 #### 7.4.2 Gestão de Perfis (Categorias)
 * **Cadastro de Perfis:**
   * Validação do campo `name` (obrigatório, não vazio e único no banco). Bloqueio e mensagem explícita de erro em caso de duplicidade (`SQLiteConstraintException`).
-  * Fluxo de seleção múltipla para vincular placas cadastradas no momento da criação.
+  * Listagem de seleção alimentada pela totalidade das placas cadastradas no sistema (`PlateRepository.getAllPlates()`), independente de filtros ativos na tela principal.
 * **Edição de Perfis:**
   * Permite renomear a categoria (mantendo as regras de validação e unicidade) e gerenciar os vínculos (adicionar ou remover placas associadas).
+  * Exibe todas as placas cadastradas no sistema, com pré-seleção marcada para as placas atualmente vinculadas ao perfil.
+* **Filtro de Busca na Seleção de Placas:**
+  * Campo de busca integrado ao diálogo de criação/edição de perfil permitindo filtrar placas em tempo real pelo atributo `name`.
+  * O `PlateSelectionAdapter` gerencia a filtragem da lista visível mantendo íntegro o conjunto de IDs selecionados (`selectedIds: MutableSet<String>`), garantindo que itens marcados não sejam desmarcados ao serem ocultados pelo filtro.
+* **Atalho para Criação Rápida de Placa:**
+  * Botão de atalho no diálogo de criação/edição de perfil ("Nova Placa") acionando o formulário de cadastro de placa.
+  * Ao concluir o cadastro, a nova placa é persistida fisicamente e inserida no Room, sendo imediatamente inserida e marcada como selecionada na listagem de vínculos do perfil.
 * **Deleção de Perfis:**
   * Diálogo de confirmação de exclusão da categoria.
   * Ao deletar o perfil, todos os vínculos com placas são desfeitos via `CrossRefDao` / `ForeignKey.CASCADE` na tabela associativa, **sem deletar as placas associadas do banco de dados** (proibição estrita de efeito cascata nas placas).

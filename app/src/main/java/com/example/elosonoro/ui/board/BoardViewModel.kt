@@ -145,12 +145,15 @@ class BoardViewModel(
         }
     }
 
+    fun getAllPlates(): Flow<List<PlateEntity>> = plateRepository.getAllPlates()
+
     fun savePlate(
         name: String,
         imageUri: String? = null,
         audioUri: String? = null,
         id: String? = null,
-        profileIdToLink: String? = null
+        profileIdToLink: String? = null,
+        onSuccess: ((PlateEntity) -> Unit)? = null
     ) {
         if (name.isBlank()) {
             _userMessage.value = "O nome da placa é obrigatório e não pode ser vazio."
@@ -176,6 +179,7 @@ class BoardViewModel(
                     )
                 }
                 _userMessage.value = "Placa '${savedPlate.name}' salva com sucesso!"
+                onSuccess?.invoke(savedPlate)
             }.onFailure { error ->
                 _userMessage.value = error.message ?: "Erro ao salvar placa."
             }

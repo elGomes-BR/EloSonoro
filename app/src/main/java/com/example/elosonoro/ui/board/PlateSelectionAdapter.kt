@@ -14,25 +14,65 @@ import java.io.File
 
 /**
  * Adapter para seleção de múltiplas placas na criação/edição de perfis/categorias.
+ * Suporta listagem global, filtro de busca por nome e adição dinâmica de placas preservando seleções.
  */
 class PlateSelectionAdapter(
-    private val plates: List<PlateEntity>,
+    initialPlates: List<PlateEntity> = emptyList(),
     initialSelectedIds: Set<String> = emptySet()
 ) : RecyclerView.Adapter<PlateSelectionAdapter.SelectionViewHolder>() {
 
+    private val allPlates = initialPlates.toMutableList()
+    private val displayedPlates = initialPlates.toMutableList()
     private val selectedIds = initialSelectedIds.toMutableSet()
+    private var currentFilterQuery: String = ""
 
     fun getSelectedPlateIds(): List<String> = selectedIds.toList()
+
+    fun isPlateSelected(plateId: String): Boolean = selectedIds.contains(plateId)
+
+    fun filter(query: String) {
+        currentFilterQuery = query.trim()
+        displayedPlates.clear()
+        if (currentFilterQuery.isBlank()) {
+            displayedPlates.addAll(allPlates)
+        } else {
+            displayedPlates.addAll(
+                allPlates.filter { it.name.contains(currentFilterQuery, ignoreCase = true) }
+            )
+        }
+        notifyDataSetChanged()
+    }
+
+    fun setAllPlates(plates: List<PlateEntity>, selectedIdsToSet: Set<String>? = null) {
+        allPlates.clear()
+        allPlates.addAll(plates)
+        if (selectedIdsToSet != null) {
+            selectedIds.clear()
+            selectedIds.addAll(selectedIdsToSet)
+        }
+        filter(currentFilterQuery)
+    }
+
+    fun addAndSelectPlate(newPlate: PlateEntity) {
+        val existingIndex = allPlates.indexOfFirst { it.id == newPlate.id }
+        if (existingIndex >= 0) {
+            allPlates[existingIndex] = newPlate
+        } else {
+            allPlates.add(0, newPlate)
+        }
+        selectedIds.add(newPlate.id)
+        filter(currentFilterQuery)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SelectionViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_plate_selection, parent, false)
         return SelectionViewHolder(view)
     }
 
-    override fun getItemCount(): Int = plates.size
+    override fun getItemCount(): Int = displayedPlates.size
 
     override fun onBindViewHolder(holder: SelectionViewHolder, position: Int) {
-        val plate = plates[position]
+        val plate = displayedPlates[position]
         holder.bind(plate, selectedIds.contains(plate.id)) { isChecked ->
             if (isChecked) {
                 selectedIds.add(plate.id)
