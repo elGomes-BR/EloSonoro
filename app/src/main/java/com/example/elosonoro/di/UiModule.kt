@@ -20,6 +20,7 @@ val uiModule = module {
             playPlateSoundUseCase = get(),
             savePlateUseCase = get(),
             createProfileUseCase = get(),
+            updateProfileUseCase = get(),
             plateRepository = get(),
             profileRepository = get(),
             preferencesManager = get()

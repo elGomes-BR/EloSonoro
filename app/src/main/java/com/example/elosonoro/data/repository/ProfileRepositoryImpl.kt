@@ -95,11 +95,27 @@ class ProfileRepositoryImpl(
         profile: ProfileEntity,
         plateIds: List<String>?
     ): Result<Unit> = withContext(ioDispatcher) {
+        val trimmedName = profile.name.trim()
+        if (trimmedName.isBlank()) {
+            return@withContext Result.failure(
+                IllegalArgumentException("O nome da categoria é obrigatório e não pode ser vazio.")
+            )
+        }
+
         try {
-            profileDao.update(profile)
+            // Verificação de unicidade de nome para outros perfis existentes
+            val existing = profileDao.getProfileByNameSync(trimmedName)
+            if (existing != null && existing.id != profile.id) {
+                return@withContext Result.failure(
+                    IllegalStateException("Já existe uma categoria cadastrada com o nome '$trimmedName'.")
+                )
+            }
+
+            val updatedProfile = profile.copy(name = trimmedName)
+            profileDao.update(updatedProfile)
 
             if (plateIds != null) {
-                // Atualiza vínculos: remove anteriores e insere novos
+                // Atualiza vínculos dinamicamente: remove anteriores e insere os novos selecionados
                 crossRefDao.deleteAllPlatesFromProfile(profile.id)
                 if (plateIds.isNotEmpty()) {
                     val crossRefs = plateIds.map { plateId ->
@@ -110,8 +126,10 @@ class ProfileRepositoryImpl(
                     }
                     crossRefDao.insertAll(crossRefs)
                 }
+                Log.d(TAG, "Vínculos da categoria '${updatedProfile.name}' atualizados com ${plateIds.size} placas.")
             }
 
+            Log.d(TAG, "Categoria '${updatedProfile.name}' atualizada com sucesso.")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao atualizar perfil '${profile.name}': ${e.message}", e)

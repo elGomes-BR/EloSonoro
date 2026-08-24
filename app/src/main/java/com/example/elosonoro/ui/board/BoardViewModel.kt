@@ -12,6 +12,7 @@ import com.example.elosonoro.domain.usecase.GetPlatesUseCase
 import com.example.elosonoro.domain.usecase.GetProfilesWithPlatesUseCase
 import com.example.elosonoro.domain.usecase.PlayPlateSoundUseCase
 import com.example.elosonoro.domain.usecase.SavePlateUseCase
+import com.example.elosonoro.domain.usecase.UpdateProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,6 +38,7 @@ class BoardViewModel(
     private val playPlateSoundUseCase: PlayPlateSoundUseCase,
     private val savePlateUseCase: SavePlateUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
+    private val updateProfileUseCase: UpdateProfileUseCase,
     private val plateRepository: PlateRepository,
     private val profileRepository: ProfileRepository,
     private val preferencesManager: UserPreferences
@@ -212,6 +214,26 @@ class BoardViewModel(
             _isLoading.value = false
         }
     }
+
+    fun updateProfile(profile: ProfileEntity, plateIds: List<String>? = null) {
+        if (profile.name.isBlank()) {
+            _userMessage.value = "O nome da categoria é obrigatório e não pode ser vazio."
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = updateProfileUseCase(profile = profile, plateIds = plateIds)
+            result.onSuccess {
+                _userMessage.value = "Categoria '${profile.name.trim()}' atualizada com sucesso!"
+            }.onFailure { error ->
+                _userMessage.value = error.message ?: "Erro ao atualizar categoria."
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun getPlatesForProfile(profileId: String) = profileRepository.getPlatesForProfile(profileId)
 
     fun deleteProfile(profile: ProfileEntity) {
         viewModelScope.launch {

@@ -77,6 +77,68 @@ class ProfileRepositoryTest {
     }
 
     @Test
+    fun testUpdateProfileSuccessWithNewNameAndNewPlatesAssociation() = runTest(testDispatcher) {
+        val initialProfile = ProfileEntity(id = "p-1", name = "Comida")
+        fakeProfileDao.profiles.add(initialProfile)
+        fakeCrossRefDao.crossRefs.add(PlateProfileCrossRef(plateId = "plate-1", profileId = "p-1"))
+        fakeCrossRefDao.crossRefs.add(PlateProfileCrossRef(plateId = "plate-2", profileId = "p-1"))
+
+        val newPlateIds = listOf("plate-3", "plate-4")
+        val result = repository.updateProfile(
+            profile = initialProfile.copy(name = "Alimentação e Bebidas"),
+            plateIds = newPlateIds
+        )
+
+        assertTrue(result.isSuccess)
+        assertEquals("Alimentação e Bebidas", fakeProfileDao.profiles.first().name)
+
+        // Verifica que os vínculos anteriores foram substituídos pelos novos
+        assertEquals(2, fakeCrossRefDao.crossRefs.size)
+        val linkedPlateIds = fakeCrossRefDao.crossRefs.map { it.plateId }
+        assertTrue(linkedPlateIds.containsAll(newPlateIds))
+        assertFalse(linkedPlateIds.contains("plate-1"))
+        assertFalse(linkedPlateIds.contains("plate-2"))
+    }
+
+    @Test
+    fun testUpdateProfileBlankNameReturnsFailure() = runTest(testDispatcher) {
+        val profile = ProfileEntity(id = "p-1", name = "Alimentação")
+        fakeProfileDao.profiles.add(profile)
+
+        val result = repository.updateProfile(profile = profile.copy(name = "   "))
+
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+        assertEquals("Alimentação", fakeProfileDao.profiles.first().name)
+    }
+
+    @Test
+    fun testUpdateProfileDuplicateNameFromAnotherProfileReturnsFailure() = runTest(testDispatcher) {
+        val profile1 = ProfileEntity(id = "p-1", name = "Alimentação")
+        val profile2 = ProfileEntity(id = "p-2", name = "Rotina")
+        fakeProfileDao.profiles.addAll(listOf(profile1, profile2))
+
+        // Tenta renomear profile2 para "Alimentação" (já usado por profile1)
+        val result = repository.updateProfile(profile = profile2.copy(name = "Alimentação"))
+
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalStateException)
+        assertEquals("Rotina", fakeProfileDao.profiles.find { it.id == "p-2" }?.name)
+    }
+
+    @Test
+    fun testUpdateProfileSameNameMaintainsSuccess() = runTest(testDispatcher) {
+        val profile = ProfileEntity(id = "p-1", name = "Alimentação")
+        fakeProfileDao.profiles.add(profile)
+
+        val result = repository.updateProfile(profile = profile.copy(name = "Alimentação"), plateIds = listOf("plate-5"))
+
+        assertTrue(result.isSuccess)
+        assertEquals(1, fakeCrossRefDao.crossRefs.size)
+        assertEquals("plate-5", fakeCrossRefDao.crossRefs.first().plateId)
+    }
+
+    @Test
     fun testDeleteProfileDeletesProfileAndKeepsPlatesIntact() = runTest(testDispatcher) {
         val profile = ProfileEntity(id = "profile-1", name = "Rotina")
         val crossRef = PlateProfileCrossRef(plateId = "plate-1", profileId = "profile-1")

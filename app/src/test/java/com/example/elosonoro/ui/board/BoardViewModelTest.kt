@@ -68,6 +68,7 @@ class BoardViewModelTest {
         val playPlateSoundUseCase = PlayPlateSoundUseCase(fakePlaybackCoordinator, fakeTelemetryRepository)
         val savePlateUseCase = SavePlateUseCase(fakePlateRepository)
         val createProfileUseCase = CreateProfileUseCase(fakeProfileRepository)
+        val updateProfileUseCase = UpdateProfileUseCase(fakeProfileRepository)
 
         viewModel = BoardViewModel(
             getPlatesUseCase = getPlatesUseCase,
@@ -75,6 +76,7 @@ class BoardViewModelTest {
             playPlateSoundUseCase = playPlateSoundUseCase,
             savePlateUseCase = savePlateUseCase,
             createProfileUseCase = createProfileUseCase,
+            updateProfileUseCase = updateProfileUseCase,
             plateRepository = fakePlateRepository,
             profileRepository = fakeProfileRepository,
             preferencesManager = fakePreferencesManager
@@ -139,6 +141,28 @@ class BoardViewModelTest {
     @Test
     fun testCreateProfileBlankNameSetsValidationMessage() = runTest(testDispatcher) {
         viewModel.createProfile(name = "")
+        advanceUntilIdle()
+
+        assertNotNull(viewModel.uiState.value.userMessage)
+        assertTrue(viewModel.uiState.value.userMessage!!.contains("obrigatório"))
+    }
+
+    @Test
+    fun testUpdateProfileSuccessUpdatesUserMessage() = runTest(testDispatcher) {
+        val profile = ProfileEntity(id = "p-1", name = "Alimentação")
+        fakeProfileRepository.profilesList.add(profile)
+
+        viewModel.updateProfile(profile = profile.copy(name = "Comidas"), plateIds = listOf("pl-1"))
+        advanceUntilIdle()
+
+        assertNotNull(viewModel.uiState.value.userMessage)
+        assertTrue(viewModel.uiState.value.userMessage!!.contains("atualizada com sucesso"))
+    }
+
+    @Test
+    fun testUpdateProfileBlankNameSetsValidationMessage() = runTest(testDispatcher) {
+        val profile = ProfileEntity(id = "p-1", name = "Alimentação")
+        viewModel.updateProfile(profile = profile.copy(name = "   "))
         advanceUntilIdle()
 
         assertNotNull(viewModel.uiState.value.userMessage)

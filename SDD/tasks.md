@@ -52,8 +52,8 @@ Lista de tarefas pendentes.
 - [x] Implementar e validar via testes a exclusão física obrigatória de todas as mídias associadas (`imageUri` e `audioUri`) ao remover uma placa do sistema.
 
 ## Refatoração 3: Edição de Perfis e Gerenciamento de Vínculos (Spec 2.5, Plan 2.3 e 7.4.2)
-- [ ] Implementar e validar fluxo de edição de categorias/perfis existentes permitindo alteração do nome com validação de unicidade.
-- [ ] Implementar e validar atualização dinâmica de vínculos (adição e remoção de placas associadas) na edição de um perfil existente.
+- [x] Implementar e validar fluxo de edição de categorias/perfis existentes permitindo alteração do nome com validação de unicidade.
+- [x] Implementar e validar atualização dinâmica de vínculos (adição e remoção de placas associadas) na edição de um perfil existente.
 
 ## Refatoração 4: Validação Estrita e Integridade Referencial (Spec 1.2, 2.4, 2.5)
 - [ ] Validar e garantir via testes unitários que a exclusão de categorias/perfis não exclua em cascata as placas associadas (`PlateEntity` permanece intacta).

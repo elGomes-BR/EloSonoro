@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
 
         // Chip Adicionar Categoria
         chipAddCategory.setOnClickListener {
-            showCreateProfileDialog()
+            showProfileEditorDialog(null)
         }
 
         // FAB Nova Placa
@@ -235,6 +235,10 @@ class MainActivity : AppCompatActivity() {
                     isCloseIconVisible = true
                     setOnCloseIconClickListener {
                         showDeleteProfileConfirmation(profile)
+                    }
+                    setOnLongClickListener {
+                        showProfileEditorDialog(profile)
+                        true
                     }
                 }
             }
@@ -396,11 +400,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showCreateProfileDialog() {
+    private fun showProfileEditorDialog(profileToEdit: ProfileEntity?) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_profile_editor)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
+        val txtProfileDialogTitle: TextView = dialog.findViewById(R.id.txtProfileDialogTitle)
         val inputLayoutProfileName: TextInputLayout = dialog.findViewById(R.id.inputLayoutProfileName)
         val edtProfileName: TextInputEditText = dialog.findViewById(R.id.edtProfileName)
         val recyclerSelection: RecyclerView = dialog.findViewById(R.id.recyclerPlateSelection)
@@ -408,9 +413,25 @@ class MainActivity : AppCompatActivity() {
         val btnSave: MaterialButton = dialog.findViewById(R.id.btnSaveProfile)
 
         val allPlates = viewModel.uiState.value.plates
-        val selectionAdapter = PlateSelectionAdapter(allPlates)
         recyclerSelection.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
-        recyclerSelection.adapter = selectionAdapter
+
+        if (profileToEdit != null) {
+            txtProfileDialogTitle.text = "Editar Categoria"
+            edtProfileName.setText(profileToEdit.name)
+
+            // Carrega as placas vinculadas para seleção inicial
+            lifecycleScope.launch {
+                viewModel.getPlatesForProfile(profileToEdit.id).collectLatest { linkedPlates ->
+                    val linkedIds = linkedPlates.map { it.id }.toSet()
+                    val selectionAdapter = PlateSelectionAdapter(allPlates, linkedIds)
+                    recyclerSelection.adapter = selectionAdapter
+                }
+            }
+        } else {
+            txtProfileDialogTitle.text = getString(R.string.add_category)
+            val selectionAdapter = PlateSelectionAdapter(allPlates, emptySet())
+            recyclerSelection.adapter = selectionAdapter
+        }
 
         btnCancel.setOnClickListener { dialog.dismiss() }
 
@@ -422,8 +443,17 @@ class MainActivity : AppCompatActivity() {
             }
             inputLayoutProfileName.error = null
 
-            val selectedIds = selectionAdapter.getSelectedPlateIds()
-            viewModel.createProfile(name = name, plateIds = selectedIds)
+            val selectionAdapter = recyclerSelection.adapter as? PlateSelectionAdapter
+            val selectedIds = selectionAdapter?.getSelectedPlateIds() ?: emptyList()
+
+            if (profileToEdit != null) {
+                viewModel.updateProfile(
+                    profile = profileToEdit.copy(name = name),
+                    plateIds = selectedIds
+                )
+            } else {
+                viewModel.createProfile(name = name, plateIds = selectedIds)
+            }
             dialog.dismiss()
         }
 
