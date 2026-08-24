@@ -33,11 +33,15 @@ Fluxo condicional executado ao tocar em uma placa:
 * **Entradas Opcionais:** Imagem (URI), Áudio de Voz (URI).
 * **Regras de Validação:** O sistema deve bloquear a operação de salvar e emitir um alerta visual se o campo "Nome" estiver vazio.
 * **Processamento I/O no Cadastro:** Ao confirmar o cadastro, se houver mídia associada (capturada pela câmera, selecionada da galeria ou baixada da API), o sistema deve obrigatoriamente copiar o arquivo para o diretório interno privado do aplicativo antes de persistir o registro no banco de dados.
+* **Edição de Placas:** Ao editar uma placa, deve ser possivel alterar o nome da placa, bem como a imagem e o áudio associados a ela. Se a mídia for alterada, o sistema deve obrigatoriamente remover o arquivo de mídia antigo e copiar o novo arquivo de mídia para o diretório interno privado do aplicativo antes de persistir o registro no banco de dados.
+* **Remoção de Placas:** O sistema deve permitir a remoção de placas e, ao remover uma placa, deve obrigatoriamente remover os arquivos de mídia associados a ela.
 
 ### 2.5 Cadastro de Perfis (Categorias)
 * **Entradas Exigidas:** Nome da Categoria (Texto, obrigatório).
 * **Regras de Validação:** O campo "Nome" não pode ser vazio e deve ser único no banco de dados. Tentativas de criar uma categoria com nome idêntico a uma existente devem ser bloqueadas com erro explícito.
 * **Fluxo de Associação:** A interface de criação do perfil deve fornecer o fluxo imediato para selecionar e vincular placas previamente cadastradas à nova categoria.
+* **Edição de Perfis (Categorias):** Deve ser possivel editar os perfis existentes. A interface deve permitir a alteração do nome da categoria, bem como a adição e remoção de placas associadas a ela.
+* **Deleção de Perfis (Categorias):** Deve ser possivel deletar os perfis existentes. Ao deletar um perfil, as placas associadas a ele devem ser desvinculadas do perfil, mas não devem ser deletadas do banco de dados.
 
 ## 3. Estados de Interface e Acessibilidade
 

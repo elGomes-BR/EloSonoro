@@ -89,6 +89,134 @@ class PlateRepositoryTest {
     }
 
     @Test
+    fun testEditPlateReplacingImageDeletesOldImageFileAndSavesNewOne() = runTest(testDispatcher) {
+        val oldImagePath = "/data/user/0/com.example.elosonoro/files/images/img_old.png"
+        val oldAudioPath = "/data/user/0/com.example.elosonoro/files/audio/audio_old.mp3"
+        val newImagePath = "/data/user/0/com.example.elosonoro/files/images/img_new.png"
+
+        val existingPlate = PlateEntity(
+            id = "plate-edit-1",
+            name = "Bola",
+            imageUri = oldImagePath,
+            audioUri = oldAudioPath
+        )
+        fakePlateDao.plates.add(existingPlate)
+        fakeFileManager.existingFiles.add(oldImagePath)
+        fakeFileManager.existingFiles.add(oldAudioPath)
+
+        fakeFileManager.savedImagePath = newImagePath
+
+        val result = repository.savePlate(
+            id = "plate-edit-1",
+            name = "Bola Azul",
+            imageUri = "content://media/external/images/media/999",
+            audioUri = oldAudioPath // Mantém o áudio anterior
+        )
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrNull()
+        assertNotNull(updated)
+        assertEquals("Bola Azul", updated?.name)
+        assertEquals(newImagePath, updated?.imageUri)
+        assertEquals(oldAudioPath, updated?.audioUri)
+
+        // Verifica que o arquivo antigo de imagem foi deletado fisicamente
+        assertFalse(fakeFileManager.existingFiles.contains(oldImagePath))
+        // Verifica que o novo arquivo de imagem e o áudio antigo existem
+        assertTrue(fakeFileManager.existingFiles.contains(newImagePath))
+        assertTrue(fakeFileManager.existingFiles.contains(oldAudioPath))
+    }
+
+    @Test
+    fun testEditPlateReplacingAudioDeletesOldAudioFileAndSavesNewOne() = runTest(testDispatcher) {
+        val oldAudioPath = "/data/user/0/com.example.elosonoro/files/audio/audio_old.mp3"
+        val newAudioPath = "/data/user/0/com.example.elosonoro/files/audio/audio_new.mp3"
+        val imagePath = "/data/user/0/com.example.elosonoro/files/images/img_1.png"
+
+        val existingPlate = PlateEntity(
+            id = "plate-edit-2",
+            name = "Brinquedo",
+            imageUri = imagePath,
+            audioUri = oldAudioPath
+        )
+        fakePlateDao.plates.add(existingPlate)
+        fakeFileManager.existingFiles.add(imagePath)
+        fakeFileManager.existingFiles.add(oldAudioPath)
+
+        fakeFileManager.savedAudioPath = newAudioPath
+
+        val result = repository.savePlate(
+            id = "plate-edit-2",
+            name = "Brinquedo",
+            imageUri = imagePath, // Mantém a mesma imagem
+            audioUri = "content://media/external/audio/media/888" // Novo áudio
+        )
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrNull()
+        assertNotNull(updated)
+        assertEquals(newAudioPath, updated?.audioUri)
+
+        // Verifica que o arquivo antigo de áudio foi deletado fisicamente
+        assertFalse(fakeFileManager.existingFiles.contains(oldAudioPath))
+        assertTrue(fakeFileManager.existingFiles.contains(newAudioPath))
+        assertTrue(fakeFileManager.existingFiles.contains(imagePath))
+    }
+
+    @Test
+    fun testEditPlateRemovingMediaDeletesOldFiles() = runTest(testDispatcher) {
+        val oldImagePath = "/data/user/0/com.example.elosonoro/files/images/img_to_remove.png"
+        val oldAudioPath = "/data/user/0/com.example.elosonoro/files/audio/audio_to_remove.mp3"
+
+        val existingPlate = PlateEntity(
+            id = "plate-edit-3",
+            name = "Casa",
+            imageUri = oldImagePath,
+            audioUri = oldAudioPath
+        )
+        fakePlateDao.plates.add(existingPlate)
+        fakeFileManager.existingFiles.add(oldImagePath)
+        fakeFileManager.existingFiles.add(oldAudioPath)
+
+        val result = repository.savePlate(
+            id = "plate-edit-3",
+            name = "Casa Nova",
+            imageUri = null,
+            audioUri = null
+        )
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrNull()
+        assertNotNull(updated)
+        assertEquals(null, updated?.imageUri)
+        assertEquals(null, updated?.audioUri)
+
+        // Verifica que ambos os arquivos antigos foram removidos fisicamente
+        assertFalse(fakeFileManager.existingFiles.contains(oldImagePath))
+        assertFalse(fakeFileManager.existingFiles.contains(oldAudioPath))
+    }
+
+    @Test
+    fun testDeletePlateByIdRemovesEntityAndDeletesPhysicalMedia() = runTest(testDispatcher) {
+        val plate = PlateEntity(
+            id = "plate-del-id",
+            name = "Suco de Laranja",
+            imageUri = "/data/user/0/com.example.elosonoro/files/images/img_del.png",
+            audioUri = "/data/user/0/com.example.elosonoro/files/audio/audio_del.mp3"
+        )
+        fakePlateDao.plates.add(plate)
+        fakeFileManager.existingFiles.add(plate.imageUri!!)
+        fakeFileManager.existingFiles.add(plate.audioUri!!)
+
+        val result = repository.deletePlateById("plate-del-id")
+
+        assertTrue(result.isSuccess)
+        assertTrue(fakePlateDao.plates.isEmpty())
+        assertFalse(fakeFileManager.existingFiles.contains(plate.imageUri))
+        assertFalse(fakeFileManager.existingFiles.contains(plate.audioUri))
+    }
+
+    @Test
     fun testSearchPlatesReturnsFilteredFlow() = runTest(testDispatcher) {
         val plate1 = PlateEntity(id = "1", name = "Água")
         val plate2 = PlateEntity(id = "2", name = "Suco")

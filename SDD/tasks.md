@@ -46,3 +46,24 @@ Lista de tarefas pendentes.
 
 ## Refatoração 1: Correção da Spec 3.2
 - [x] Alterar layout de exibição das placas para 2 colunas ou 4 colunas com rolagem vertical. O usuário deve poder alternar entre os dois modos.
+
+## Refatoração 2: Ciclo de Vida e Limpeza de Mídias em Placas (Spec 2.4, Plan 3 e 7.4.1)
+- [x] Implementar e validar via testes a remoção física de arquivos de mídia antigos no `Context.filesDir` ao editar uma placa e substituir imagem ou áudio.
+- [x] Implementar e validar via testes a exclusão física obrigatória de todas as mídias associadas (`imageUri` e `audioUri`) ao remover uma placa do sistema.
+
+## Refatoração 3: Edição de Perfis e Gerenciamento de Vínculos (Spec 2.5, Plan 2.3 e 7.4.2)
+- [ ] Implementar e validar fluxo de edição de categorias/perfis existentes permitindo alteração do nome com validação de unicidade.
+- [ ] Implementar e validar atualização dinâmica de vínculos (adição e remoção de placas associadas) na edição de um perfil existente.
+
+## Refatoração 4: Validação Estrita e Integridade Referencial (Spec 1.2, 2.4, 2.5)
+- [ ] Validar e garantir via testes unitários que a exclusão de categorias/perfis não exclua em cascata as placas associadas (`PlateEntity` permanece intacta).
+- [ ] Validar bloqueio de nomes duplicados em categorias com emissão de erro explícito na UI ao capturar violação de unicidade (`SQLiteConstraintException`).
+- [ ] Validar bloqueio com alerta visual de submissões de placas ou perfis com campo 'Nome' vazio ou em branco.
+- [ ] Garantir o fluxo de cópia física obrigatória de mídias para `Context.filesDir` antes da persistência no Room (zero BLOBs no banco).
+
+## Refatoração 5: Performance de Áudio, Fallback TTS e Telemetria (Spec 2.1, Constitution 4 e 5)
+- [ ] Validar latência de áudio inferior a 200ms no acionamento de placas com `SoundPool`.
+- [ ] Validar fallback imediato para Text-to-Speech (TTS) nativo caso o áudio local não exista ou seja inválido.
+- [ ] Validar coleta silenciosa de telemetria em segundo plano (`TelemetryEntity`) sem impacto na latência sonora.
+- [ ] Validar reatividade da pesquisa inteligente por nome na prancha principal.
+

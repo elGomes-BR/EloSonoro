@@ -34,4 +34,9 @@ interface PlateRepository {
      * Remove a placa do banco de dados e apaga seus arquivos físicos de mídia correspondentes.
      */
     suspend fun deletePlate(plate: PlateEntity): Result<Unit>
+
+    /**
+     * Remove a placa pelo seu ID do banco de dados e apaga seus arquivos físicos de mídia correspondentes.
+     */
+    suspend fun deletePlateById(id: String): Result<Unit>
 }

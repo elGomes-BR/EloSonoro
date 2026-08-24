@@ -52,14 +52,51 @@ class PlateRepositoryImpl(
         }
 
         try {
-            // Processamento físico da imagem
-            val permanentImagePath = processMediaImage(imageUri)
+            val plateId = id?.ifBlank { null }
+            val existingPlate = if (plateId != null) {
+                plateDao.getPlateByIdSync(plateId)
+            } else null
 
-            // Processamento físico do áudio
-            val permanentAudioPath = processMediaAudio(audioUri)
+            // Processamento e limpeza de imagem antiga na edição (Spec 2.4)
+            val permanentImagePath = if (existingPlate != null) {
+                if (imageUri != existingPlate.imageUri) {
+                    // Mídia de imagem alterada ou removida: exclui o arquivo físico antigo
+                    existingPlate.imageUri?.let { oldPath ->
+                        fileManager.deleteFile(oldPath)
+                        Log.d(TAG, "Imagem antiga removida fisicamente: $oldPath")
+                    }
+                    // Se nova imagem fornecida, copia para o armazenamento interno
+                    processMediaImage(imageUri)
+                } else {
+                    // Imagem inalterada: preserva o caminho existente
+                    existingPlate.imageUri
+                }
+            } else {
+                // Nova placa sendo criada
+                processMediaImage(imageUri)
+            }
+
+            // Processamento e limpeza de áudio antigo na edição (Spec 2.4)
+            val permanentAudioPath = if (existingPlate != null) {
+                if (audioUri != existingPlate.audioUri) {
+                    // Mídia de áudio alterada ou removida: exclui o arquivo físico antigo
+                    existingPlate.audioUri?.let { oldPath ->
+                        fileManager.deleteFile(oldPath)
+                        Log.d(TAG, "Áudio antigo removido fisicamente: $oldPath")
+                    }
+                    // Se novo áudio fornecido, copia para o armazenamento interno
+                    processMediaAudio(audioUri)
+                } else {
+                    // Áudio inalterado: preserva o caminho existente
+                    existingPlate.audioUri
+                }
+            } else {
+                // Nova placa sendo criada
+                processMediaAudio(audioUri)
+            }
 
             val plateEntity = PlateEntity(
-                id = id?.ifBlank { null } ?: UUID.randomUUID().toString(),
+                id = plateId ?: UUID.randomUUID().toString(),
                 name = name.trim(),
                 imageUri = permanentImagePath,
                 audioUri = permanentAudioPath
@@ -78,18 +115,35 @@ class PlateRepositoryImpl(
         try {
             plateDao.delete(plate)
 
-            // Limpeza física dos arquivos de mídia associados
+            // Limpeza física dos arquivos de mídia associados (Spec 2.4)
             plate.imageUri?.let { path ->
                 fileManager.deleteFile(path)
+                Log.d(TAG, "Arquivo de imagem da placa excluído: $path")
             }
             plate.audioUri?.let { path ->
                 fileManager.deleteFile(path)
+                Log.d(TAG, "Arquivo de áudio da placa excluído: $path")
             }
 
             Log.d(TAG, "Placa excluída com sucesso: ${plate.name}")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao excluir placa: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deletePlateById(id: String): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            val plate = plateDao.getPlateByIdSync(id)
+            if (plate != null) {
+                deletePlate(plate)
+            } else {
+                plateDao.deleteById(id)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao excluir placa por id $id: ${e.message}", e)
             Result.failure(e)
         }
     }
