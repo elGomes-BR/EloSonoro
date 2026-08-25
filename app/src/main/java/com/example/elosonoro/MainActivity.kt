@@ -262,7 +262,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showPlateEditorDialog(plateToEdit: PlateEntity?) {
+    private fun showPlateEditorDialog(plateToEdit: PlateEntity?, onSaved: ((PlateEntity) -> Unit)? = null) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_plate_editor)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -358,7 +358,8 @@ class MainActivity : AppCompatActivity() {
                 name = name,
                 imageUri = selectedImageUriString,
                 audioUri = selectedAudioUriString,
-                id = plateToEdit?.id
+                id = plateToEdit?.id,
+                onSuccess = onSaved
             )
             dialog.dismiss()
         }
@@ -408,29 +409,72 @@ class MainActivity : AppCompatActivity() {
         val txtProfileDialogTitle: TextView = dialog.findViewById(R.id.txtProfileDialogTitle)
         val inputLayoutProfileName: TextInputLayout = dialog.findViewById(R.id.inputLayoutProfileName)
         val edtProfileName: TextInputEditText = dialog.findViewById(R.id.edtProfileName)
+        val edtSearchSelection: TextInputEditText = dialog.findViewById(R.id.edtSearchSelection)
+        val btnQuickAddPlate: MaterialButton = dialog.findViewById(R.id.btnQuickAddPlate)
         val recyclerSelection: RecyclerView = dialog.findViewById(R.id.recyclerPlateSelection)
+        val txtEmptyPlateSelection: TextView = dialog.findViewById(R.id.txtEmptyPlateSelection)
         val btnCancel: MaterialButton = dialog.findViewById(R.id.btnCancelProfile)
         val btnSave: MaterialButton = dialog.findViewById(R.id.btnSaveProfile)
 
-        val allPlates = viewModel.uiState.value.plates
+        val selectionAdapter = PlateSelectionAdapter()
         recyclerSelection.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        recyclerSelection.adapter = selectionAdapter
+
+        var initialLoadCompleted = false
 
         if (profileToEdit != null) {
             txtProfileDialogTitle.text = "Editar Categoria"
             edtProfileName.setText(profileToEdit.name)
 
-            // Carrega as placas vinculadas para seleção inicial
             lifecycleScope.launch {
+                // Carrega inicialmente as placas já vinculadas ao perfil
                 viewModel.getPlatesForProfile(profileToEdit.id).collectLatest { linkedPlates ->
                     val linkedIds = linkedPlates.map { it.id }.toSet()
-                    val selectionAdapter = PlateSelectionAdapter(allPlates, linkedIds)
-                    recyclerSelection.adapter = selectionAdapter
+                    // Observa a totalidade de placas globais do sistema
+                    viewModel.getAllPlates().collectLatest { allPlates ->
+                        if (!initialLoadCompleted) {
+                            selectionAdapter.setPlates(allPlates, linkedIds)
+                            initialLoadCompleted = true
+                        } else {
+                            selectionAdapter.setPlates(allPlates, null)
+                        }
+                        txtEmptyPlateSelection.visibility = if (selectionAdapter.itemCount == 0) View.VISIBLE else View.GONE
+                    }
                 }
             }
         } else {
             txtProfileDialogTitle.text = getString(R.string.add_category)
-            val selectionAdapter = PlateSelectionAdapter(allPlates, emptySet())
-            recyclerSelection.adapter = selectionAdapter
+
+            lifecycleScope.launch {
+                viewModel.getAllPlates().collectLatest { allPlates ->
+                    if (!initialLoadCompleted) {
+                        selectionAdapter.setPlates(allPlates, emptySet())
+                        initialLoadCompleted = true
+                    } else {
+                        selectionAdapter.setPlates(allPlates, null)
+                    }
+                    txtEmptyPlateSelection.visibility = if (selectionAdapter.itemCount == 0) View.VISIBLE else View.GONE
+                }
+            }
+        }
+
+        // Filtro de busca em tempo real
+        edtSearchSelection.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                selectionAdapter.filter(s?.toString() ?: "")
+                txtEmptyPlateSelection.visibility = if (selectionAdapter.itemCount == 0) View.VISIBLE else View.GONE
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        // Atalho para criação rápida de placa no contexto da edição de perfil (Spec 2.5)
+        btnQuickAddPlate.setOnClickListener {
+            showPlateEditorDialog(null) { newlyCreatedPlate ->
+                selectionAdapter.addPlate(newlyCreatedPlate, select = true)
+                txtEmptyPlateSelection.visibility = if (selectionAdapter.itemCount == 0) View.VISIBLE else View.GONE
+                recyclerSelection.scrollToPosition(0)
+            }
         }
 
         btnCancel.setOnClickListener { dialog.dismiss() }
@@ -443,8 +487,7 @@ class MainActivity : AppCompatActivity() {
             }
             inputLayoutProfileName.error = null
 
-            val selectionAdapter = recyclerSelection.adapter as? PlateSelectionAdapter
-            val selectedIds = selectionAdapter?.getSelectedPlateIds() ?: emptyList()
+            val selectedIds = selectionAdapter.getSelectedPlateIds()
 
             if (profileToEdit != null) {
                 viewModel.updateProfile(

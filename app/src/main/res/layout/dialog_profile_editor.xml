@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:hint="Nome da Categoria *"
         app:errorEnabled="true"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtProfileName"
@@ -36,13 +36,50 @@
             android:maxLines="1" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Barra de Ações de Vínculos: Busca em Tempo Real e Atalho Nova Placa -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputLayoutSearchSelection"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Buscar placas..."
+            android:layout_marginEnd="8dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtSearchSelection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textSize="14sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnQuickAddPlate"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_plate"
+            app:icon="@android:drawable/ic_input_add"
+            app:iconGravity="textStart"
+            android:textSize="13sp" />
+    </LinearLayout>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Vincular placas a esta categoria:"
+        android:text="Selecione as placas para esta categoria:"
         android:textStyle="bold"
-        android:textSize="14sp"
-        android:textColor="@color/md_on_surface"
+        android:textSize="13sp"
+        android:textColor="@color/md_on_surface_variant"
         android:layout_marginBottom="6dp" />
 
     <!-- Lista de Placas Disponíveis -->
@@ -53,6 +90,17 @@
         android:background="@color/md_background"
         android:padding="4dp"
         tools:listitem="@layout/item_plate_selection" />
+
+    <TextView
+        android:id="@+id/txtEmptyPlateSelection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nenhuma placa encontrada."
+        android:textAlignment="center"
+        android:textColor="@color/md_on_surface_variant"
+        android:textSize="14sp"
+        android:padding="16dp"
+        android:visibility="gone" />
 
     <!-- Botões de Ação -->
     <LinearLayout

@@ -18,8 +18,10 @@ import com.example.elosonoro.domain.usecase.GetPlatesUseCase
 import com.example.elosonoro.domain.usecase.GetProfilesWithPlatesUseCase
 import com.example.elosonoro.domain.usecase.PlayPlateSoundUseCase
 import com.example.elosonoro.domain.usecase.SavePlateUseCase
+import com.example.elosonoro.domain.usecase.UpdateProfileUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -179,6 +181,49 @@ class BoardViewModelTest {
         assertEquals(listOf("p-1"), fakeTelemetryRepository.recordedPlateIds)
     }
 
+    @Test
+    fun testGetAllPlatesReturnsAllPlatesIndependentOfSelectedProfile() = runTest(testDispatcher) {
+        fakePlateRepository.platesList.addAll(
+            listOf(
+                PlateEntity(id = "pl-1", name = "Água"),
+                PlateEntity(id = "pl-2", name = "Comida"),
+                PlateEntity(id = "pl-3", name = "Banheiro")
+            )
+        )
+
+        // Seleciona um perfil no ViewModel
+        viewModel.selectProfile("prof-1")
+        advanceUntilIdle()
+
+        // getAllPlates deve continuar retornando todas as 3 placas do sistema
+        val allPlates = viewModel.getAllPlates()
+        var retrievedPlates: List<PlateEntity> = emptyList()
+        val job = launch {
+            allPlates.collect { retrievedPlates = it }
+        }
+        advanceUntilIdle()
+        job.cancel()
+
+        assertEquals(3, retrievedPlates.size)
+        assertEquals(listOf("pl-1", "pl-2", "pl-3"), retrievedPlates.map { it.id })
+    }
+
+    @Test
+    fun testSavePlateWithSuccessCallbackFiresCallback() = runTest(testDispatcher) {
+        var createdPlate: PlateEntity? = null
+        viewModel.savePlate(
+            name = "Suco",
+            onSuccess = { saved ->
+                createdPlate = saved
+            }
+        )
+        advanceUntilIdle()
+
+        assertNotNull(createdPlate)
+        assertEquals("Suco", createdPlate?.name)
+        assertEquals(1, fakePlateRepository.platesList.size)
+    }
+
     // Fakes para teste da UI
     private class FakePlateRepository : PlateRepository {
         val platesList = mutableListOf<PlateEntity>()
@@ -203,6 +248,11 @@ class BoardViewModelTest {
 
         override suspend fun deletePlate(plate: PlateEntity): Result<Unit> {
             platesList.removeIf { it.id == plate.id }
+            return Result.success(Unit)
+        }
+
+        override suspend fun deletePlateById(id: String): Result<Unit> {
+            platesList.removeIf { it.id == id }
             return Result.success(Unit)
         }
     }
