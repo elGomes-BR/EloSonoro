@@ -116,7 +116,7 @@ class PlateRepositoryTest {
         assertTrue(result.isSuccess)
         val updated = result.getOrNull()
         assertNotNull(updated)
-        assertEquals("Bola Azul", updated?.name)
+        assertEquals("Bola azul", updated?.name)
         assertEquals(newImagePath, updated?.imageUri)
         assertEquals(oldAudioPath, updated?.audioUri)
 
@@ -227,6 +227,21 @@ class PlateRepositoryTest {
         assertEquals("Água", resultList.first().name)
     }
 
+    @Test
+    fun testSavePlateNormalizesNameForTts() = runTest(testDispatcher) {
+        // Testa salvamento com nome todo em maiúsculas
+        val resultUpper = repository.savePlate(name = "ÁGUA MINERAL")
+        assertTrue(resultUpper.isSuccess)
+        assertEquals("Água mineral", resultUpper.getOrNull()?.name)
+        assertEquals("Água mineral", fakePlateDao.plates.last().name)
+
+        // Testa salvamento com nome todo em minúsculas e espaços
+        val resultLower = repository.savePlate(name = "   quero brincar   ")
+        assertTrue(resultLower.isSuccess)
+        assertEquals("Quero brincar", resultLower.getOrNull()?.name)
+        assertEquals("Quero brincar", fakePlateDao.plates.last().name)
+    }
+
     // Fakes para teste desacoplado
     private class FakePlateDao : PlateDao {
         val plates = mutableListOf<PlateEntity>()
@@ -235,8 +250,8 @@ class PlateRepositoryTest {
             plates.removeAll { it.id == plate.id }
             plates.add(plate)
         }
-        override suspend fun insertAll(platesList: List<PlateEntity>) {
-            plates.addAll(platesList)
+        override suspend fun insertAll(plates: List<PlateEntity>) {
+            this.plates.addAll(plates)
         }
         override suspend fun update(plate: PlateEntity) {
             insert(plate)

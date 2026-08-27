@@ -6,7 +6,7 @@ Especificações detalhadas das funcionalidades.
 ### 1.1 Placas (Plates)
 * **Definição:** Unidade fundamental de comunicação.
 * **Atributos Obrigatórios:** Nome. O valor do nome deve ser gravado obrigatoriamente formatado em minúsculo com a primeira letra capitalizada (ex: "Água", "Quero brincar"), prevenindo que o sintetizador de voz (TTS) soletre palavras que estejam totalmente em maiúsculas.
-* **Atributos Opcionais:** Imagem (URI local gerada via Galeria, Câmera ou API ARASAAC), Áudio gravado (URI local).
+* **Atributos Opcionais:** Imagem (URI local gerada via Galeria, Câmera ou API ARASAAC), Áudio de Voz (URI local gravado pelo próprio usuário no momento do cadastro ou edição, com duração máxima de até 5 segundos; ou deixado vazio para uso do TTS).
 * **Independência:** Uma placa existe de forma independente no sistema, sem obrigatoriedade de vínculo a categorias.
 
 ### 1.2 Categorias/Perfis (Profiles)
@@ -22,6 +22,8 @@ Fluxo condicional executado ao tocar em uma placa:
 2. Se existir, reproduz o arquivo de áudio.
 3. Se não existir (ou o arquivo for inválido), o sistema aciona o Text-to-Speech (TTS) nativo do Android utilizando a string do campo "Nome" da placa.
 
+* **Fila de Reprodução Sequencial:** A reprodução de várias placas em sequência deve aguardar o fim da reprodução anterior em uma estrutura de fila (FIFO). O item seguinte só é reproduzido após a conclusão do áudio ou da síntese TTS atual, evitando sobreposição de sons ou cortes abruptos.
+
 ### 2.2 Gerenciamento de Imagens Externas e Sugestão Gramatical
 * Integração com API ARASAAC para pesquisa de pictogramas. O sistema deve baixar a imagem, salvá-la fisicamente e registrar a URI no banco de dados, em conformidade com as regras de persistência.
 * **Sugestão Automática de Nome:** Ao selecionar um pictograma da API ARASAAC, o sistema deve alterar automaticamente o campo "Nome" da placa no formulário de cadastro/edição para o termo sugerido pela API (formatado com a primeira letra capitalizada), garantindo maior corretude gramatical e agilidade.
@@ -33,6 +35,7 @@ Fluxo condicional executado ao tocar em uma placa:
 * **Entradas Exigidas:** Nome (Texto, obrigatório).
 * **Entradas Opcionais:** Imagem (URI), Áudio de Voz (URI).
 * **Regras de Validação e Formatação:** O sistema deve bloquear a operação de salvar e emitir um alerta visual se o campo "Nome" estiver vazio. Ao salvar o cadastro ou edição, o nome é sanitizado e gravado em minúsculo com a primeira letra capitalizada para evitar soletração pelo TTS.
+* **Gravação de Áudio:** Os áudios gravados pelo usuário não devem ultrapassar a duração máxima de 5 segundos. O sistema deve gerenciar e limitar a gravação para que não exceda esse tempo limite.
 * **Processamento I/O no Cadastro:** Ao confirmar o cadastro, se houver mídia associada (capturada pela câmera, selecionada da galeria ou baixada da API), o sistema deve obrigatoriamente copiar o arquivo para o diretório interno privado do aplicativo antes de persistir o registro no banco de dados.
 * **Edição de Placas:** Ao editar uma placa, deve ser possivel alterar o nome da placa, bem como a imagem e o áudio associados a ela. Se a mídia for alterada, o sistema deve obrigatoriamente remover o arquivo de mídia antigo e copiar o novo arquivo de mídia para o diretório interno privado do aplicativo antes de persistir o registro no banco de dados.
 * **Remoção de Placas:** O sistema deve permitir a remoção de placas e, ao remover uma placa, deve obrigatoriamente remover os arquivos de mídia associados a ela.

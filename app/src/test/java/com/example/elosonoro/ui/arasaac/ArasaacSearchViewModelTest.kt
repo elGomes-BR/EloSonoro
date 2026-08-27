@@ -73,6 +73,23 @@ class ArasaacSearchViewModelTest {
         assertEquals("/files/images/img_saved.png", viewModel.uiState.value.selectedImagePath)
     }
 
+    @Test
+    fun testDownloadAndSelectPictogramWithModelReturnsSuggestedName() = runTest(testDispatcher) {
+        fakeArasaacRepository.downloadResult = "/files/images/img_agua.png"
+        val pictogram = ArasaacPictogram(id = 500, name = "água mineral", imageUrl = "https://static.arasaac.org/500.png")
+        var returnedPath: String? = null
+        var returnedSuggestedName: String? = null
+
+        viewModel.downloadAndSelectPictogram(pictogram) { path, name ->
+            returnedPath = path
+            returnedSuggestedName = name
+        }
+        advanceUntilIdle()
+
+        assertEquals("/files/images/img_agua.png", returnedPath)
+        assertEquals("água mineral", returnedSuggestedName)
+    }
+
     private class FakeArasaacRepository : ArasaacRepository {
         var searchResult = emptyList<ArasaacPictogram>()
         var downloadResult = "/files/images/img_arasaac.png"

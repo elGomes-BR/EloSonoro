@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.elosonoro.data.local.entity.PlateEntity
 import com.example.elosonoro.data.local.entity.ProfileEntity
 import com.example.elosonoro.data.media.SoundPlaybackCoordinator
+import com.example.elosonoro.util.formatPlateName
 import com.example.elosonoro.ui.arasaac.ArasaacPictogramAdapter
 import com.example.elosonoro.ui.arasaac.ArasaacSearchViewModel
 import com.example.elosonoro.ui.board.BoardUiState
@@ -295,11 +296,16 @@ class MainActivity : AppCompatActivity() {
             updateAudioStatus(null, txtAudioStatus, btnClearAudio)
         }
 
-        // Buscar na ARASAAC
+        // Buscar na ARASAAC (Spec 2.2: Sugestão Automática de Nome)
         btnSearchArasaac.setOnClickListener {
-            showArasaacSearchDialog { downloadedLocalPath ->
+            showArasaacSearchDialog { downloadedLocalPath, suggestedName ->
                 selectedImageUriString = downloadedLocalPath
                 updateImagePreview(downloadedLocalPath, imgPreview, btnClearImage)
+                val formattedSuggestedName = suggestedName.formatPlateName()
+                if (formattedSuggestedName.isNotBlank()) {
+                    edtPlateName.setText(formattedSuggestedName)
+                    inputLayoutPlateName.error = null
+                }
             }
         }
 
@@ -503,7 +509,7 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showArasaacSearchDialog(onImageSelected: (String) -> Unit) {
+    private fun showArasaacSearchDialog(onImageSelected: (savedLocalPath: String, suggestedName: String) -> Unit) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_arasaac_search)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -519,10 +525,10 @@ class MainActivity : AppCompatActivity() {
             txtMessage.text = "Baixando imagem..."
             txtMessage.visibility = View.VISIBLE
 
-            arasaacViewModel.downloadAndSelectPictogram(pictogram.id) { savedLocalPath ->
+            arasaacViewModel.downloadAndSelectPictogram(pictogram) { savedLocalPath, suggestedName ->
                 progress.visibility = View.GONE
                 if (savedLocalPath != null) {
-                    onImageSelected(savedLocalPath)
+                    onImageSelected(savedLocalPath, suggestedName ?: pictogram.name)
                     dialog.dismiss()
                 } else {
                     txtMessage.text = "Erro ao baixar imagem da ARASAAC"

@@ -2,6 +2,7 @@ package com.example.elosonoro.ui.arasaac
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.elosonoro.domain.model.ArasaacPictogram
 import com.example.elosonoro.domain.repository.ArasaacRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -65,6 +66,30 @@ class ArasaacSearchViewModel(
                 isLoading = false,
                 errorMessage = "Falha ao conectar com o serviço ARASAAC: ${error.message}"
             )
+        }
+    }
+
+    fun downloadAndSelectPictogram(
+        pictogram: ArasaacPictogram,
+        onComplete: (savedLocalPath: String?, suggestedName: String?) -> Unit
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val result = arasaacRepository.downloadAndSavePictogram(pictogram.id)
+
+            result.onSuccess { localPath ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    selectedImagePath = localPath
+                )
+                onComplete(localPath, pictogram.name)
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Erro ao baixar pictograma: ${error.message}"
+                )
+                onComplete(null, null)
+            }
         }
     }
 

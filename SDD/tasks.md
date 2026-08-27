@@ -74,7 +74,13 @@ Lista de tarefas pendentes.
 - [x] Criar testes unitários para a filtragem de busca no adapter de seleção e para a vinculação integrada de novas placas.
 
 ## Refatoração 7: Normalização de Nomes para TTS e Sugestão Automática via ARASAAC (Spec 2.2, 2.4 e Plan 4, 5, 7.4.1)
-- [ ] Implementar formatação e sanitização de nomes de placas (primeira letra maiúscula, demais minúsculas) antes da persistência no banco para evitar soletração pelo TTS.
-- [ ] Atualizar o diálogo e repositório ARASAAC para retornar o termo/descrição sugerido pela API ao selecionar um pictograma.
-- [ ] Preencher automaticamente o campo "Nome" no formulário de cadastro/edição de placa com a palavra-chave sugerida pela ARASAAC formatada.
-- [ ] Criar testes unitários para a rotina de capitalização/sanitização de nomes e para o preenchimento automático por termo ARASAAC.
+- [x] Implementar formatação e sanitização de nomes de placas (primeira letra maiúscula, demais minúsculas) antes da persistência no banco para evitar soletração pelo TTS.
+- [x] Atualizar o diálogo e repositório ARASAAC para retornar o termo/descrição sugerido pela API ao selecionar um pictograma.
+- [x] Preencher automaticamente o campo "Nome" no formulário de cadastro/edição de placa com a palavra-chave sugerida pela ARASAAC formatada.
+- [x] Criar testes unitários para a rotina de capitalização/sanitização de nomes e para o preenchimento automático por termo ARASAAC.
+
+## Refatoração 8: Fila de Reprodução Sequencial e Limite de Gravação de Áudio (Spec 1.1, 2.1, 2.4 e Plan 4, 7.4.1)
+- [ ] Implementar `AudioRecorderManager` com limite máximo estrito de 5 segundos de gravação de voz e interrupção automática ao atingir o tempo.
+- [ ] Integrar `UtteranceProgressListener` no `TtsManager` para escutar e emitir callbacks de conclusão e erro de síntese vocal.
+- [ ] Implementar estrutura de fila sequencial (FIFO) no `SoundPlaybackCoordinator` / `PlaybackQueueManager` para coordenar a reprodução ordenada de múltiplas placas aguardando o término do áudio/TTS anterior.
+- [ ] Criar testes unitários para o enfileiramento sequencial de reprodução sonora (FIFO) e validação do limite de 5 segundos na gravação.

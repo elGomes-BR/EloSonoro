@@ -82,19 +82,25 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
   3. **Remoção de Placa (Limpeza Completa):**
      * Ao remover uma placa, o repositório executa a exclusão da entidade no banco de dados e aciona o `LocalFileManager` para deletar obrigatoriamente todos os arquivos físicos associados (`imageUri` e `audioUri`), garantindo ausência de arquivos órfãos no armazenamento do dispositivo.
 
-## 4. Componentes de Hardware, Áudio e Síntese de Voz (TTS)
+## 4. Componentes de Hardware, Áudio, Gravação e Síntese de Voz (TTS)
 * **Motor de Baixa Latência (`AudioPlayerManager`):**
-  * Implementado com a API `SoundPool` para manter áudios curtos decodificados na memória RAM.
+  * Implementado com a API `SoundPool` / `MediaPlayer` para manter áudios curtos decodificados na memória RAM e emitir callbacks de finalização de reprodução.
   * Garante que o tempo de resposta entre o toque na placa e a emissão sonora seja inferior a 200ms (Constitution - Seção 4).
+* **Motor de Gravação de Áudio (`AudioRecorderManager`):**
+  * Responsável pela gravação de áudio de voz do usuário via microfone durante o cadastro e edição de placas.
+  * **Limite Estrito de Duração:** Duração limitada a no máximo 5 segundos. O sistema interrompe e finaliza a gravação automaticamente ao atingir 5 segundos, além de validar o tempo máximo da mídia gravada.
 * **Motor de Síntese de Voz (`TtsManager`):**
   * Inicialização e configuração do `android.speech.tts.TextToSpeech` nativo com suporte ao idioma pt-BR.
+  * Implementação de `UtteranceProgressListener` para emitir eventos assíncronos de início, conclusão e erro na síntese de voz.
   * **Otimização Fonética / Prevenção de Soletração:** Para evitar que o TTS soletre acrônimos ou palavras inseridas totalmente em caixa alta (ex: "ÁGUA", "BOLA"), os nomes das placas são normalizados antes da persistência para formato em minúsculo com apenas a primeira letra capitalizada (`name.trim().lowercase().replaceFirstChar { it.titlecase() }`).
-* **Coordenador de Reprodução (`SoundPlaybackCoordinator` / `PlayPlateSoundUseCase`):**
-  * Executa o fluxo condicional estipulado na Seção 2.1 da spec:
+* **Coordenador de Reprodução e Fila Sequencial (`SoundPlaybackCoordinator` / `PlaybackQueueManager`):**
+  * Gerencia uma fila de execução FIFO (First-In, First-Out) para reprodução sequencial de múltiplas placas acionadas em sequência ou via barra de frases (Spec 2.1).
+  * Executa cada item da fila sequencialmente, aguardando o callback de conclusão do áudio anterior (via `AudioPlayerManager` ou `UtteranceProgressListener` do `TtsManager`) antes de iniciar o próximo item da fila, impedindo cortes sonoros ou sobreposições.
+  * Fluxo condicional de cada item:
     1. Verifica se a placa possui `audioUri` configurada e se o arquivo físico correspondente existe e é válido.
-    2. Existindo áudio válido, executa via `AudioPlayerManager` (`SoundPool`).
+    2. Existindo áudio válido, executa via `AudioPlayerManager`.
     3. Caso não exista áudio ou a execução falhe/arquivo seja inválido, aciona imediatamente o `TtsManager` utilizando o campo `name` da placa como texto de entrada.
-  * Dispara a gravação assíncrona de telemetria (`TelemetryEntity`) em background sem bloquear o áudio.
+  * Dispara a gravação assíncrona de telemetria (`TelemetryEntity`) em background sem bloquear o fluxo sonoro.
 
 ## 5. Integração com API Externa (ARASAAC)
 * **Cliente de Rede:** Retrofit 2 + OkHttp + Gson/Moshi Converter.
@@ -138,9 +144,9 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 * **Cadastro de Placas:**
   * Validação síncrona obrigatória do campo `name` (bloqueia submissão e emite alerta visual se vazio).
   * Formatação automática do nome (primeira letra maiúscula, demais minúsculas) para garantir leitura natural pelo TTS.
-  * Seleção de imagem (Galeria, Câmera, ARASAAC com preenchimento automático de termo) e áudio (gravação/seleção), salvando fisicamente no armazenamento interno antes de persistir no banco.
+  * Seleção de imagem (Galeria, Câmera, ARASAAC com preenchimento automático de termo) e áudio (gravação limitada a no máximo 5 segundos ou seleção), salvando fisicamente no armazenamento interno antes de persistir no banco.
 * **Edição de Placas:**
-  * Permite alteração do nome (com sanitização e capitalização), substituição ou remoção de imagem e áudio.
+  * Permite alteração do nome (com sanitização e capitalização), substituição ou remoção de imagem e áudio (com gravação limitada a 5 segundos).
   * Se a mídia for substituída ou removida, o sistema deleta fisicamente o arquivo anterior do dispositivo e grava a nova mídia internamente antes de atualizar o Room.
 * **Remoção de Placas:**
   * Diálogo de confirmação para exclusão da placa.

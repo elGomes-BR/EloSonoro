@@ -6,6 +6,7 @@ import com.example.elosonoro.data.local.dao.PlateDao
 import com.example.elosonoro.data.local.entity.PlateEntity
 import com.example.elosonoro.data.media.FileManager
 import com.example.elosonoro.domain.repository.PlateRepository
+import com.example.elosonoro.util.formatPlateName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -47,7 +48,8 @@ class PlateRepositoryImpl(
         audioUri: String?,
         id: String?
     ): Result<PlateEntity> = withContext(ioDispatcher) {
-        if (name.isBlank()) {
+        val formattedName = name.formatPlateName()
+        if (formattedName.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("O nome da placa é obrigatório e não pode ser vazio."))
         }
 
@@ -97,7 +99,7 @@ class PlateRepositoryImpl(
 
             val plateEntity = PlateEntity(
                 id = plateId ?: UUID.randomUUID().toString(),
-                name = name.trim(),
+                name = formattedName,
                 imageUri = permanentImagePath,
                 audioUri = permanentAudioPath
             )
