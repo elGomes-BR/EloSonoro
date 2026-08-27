@@ -91,6 +91,7 @@ class PlayPlateSoundUseCaseTest {
     private class FakeAudioPlayer : AudioPlayer {
         var playResult = true
         override suspend fun playAudio(pathOrUri: String?): Boolean = playResult
+        override suspend fun playAudioAndWait(pathOrUri: String?): Boolean = playResult
         override fun stopAll() {}
         override fun release() {}
     }
@@ -99,6 +100,10 @@ class PlayPlateSoundUseCaseTest {
         val spokenTexts = mutableListOf<String>()
         var speakResult = true
         override fun speak(text: String, queueMode: Int): Boolean {
+            spokenTexts.add(text)
+            return speakResult
+        }
+        override suspend fun speakAndWait(text: String): Boolean {
             spokenTexts.add(text)
             return speakResult
         }

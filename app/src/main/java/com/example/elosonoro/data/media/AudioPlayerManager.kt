@@ -2,8 +2,10 @@ package com.example.elosonoro.data.media
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.MediaMetadataRetriever
 import android.media.SoundPool
 import android.util.Log
+import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
@@ -11,6 +13,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 interface AudioPlayer {
     suspend fun playAudio(pathOrUri: String?): Boolean
+    suspend fun playAudioAndWait(pathOrUri: String?): Boolean
     fun stopAll()
     fun release()
 }
@@ -20,6 +23,7 @@ interface AudioPlayer {
  * Conforme constitution.md e plan.md:
  * - Garante tempo de resposta < 200ms para reprodução de áudios curtos de comunicação.
  * - Mantém cache em memória dos áudios mais frequentes.
+ * - Suporta suspensão playAudioAndWait para coordenação da fila sequencial (FIFO).
  */
 class AudioPlayerManager(
     private val context: Context,
@@ -28,6 +32,8 @@ class AudioPlayerManager(
 
     companion object {
         private const val TAG = "AudioPlayerManager"
+        private const val DEFAULT_AUDIO_DURATION_MS = 1000L
+        private const val MAX_ALLOWED_DURATION_MS = 5000L
     }
 
     private val audioAttributes = AudioAttributes.Builder()
@@ -92,6 +98,47 @@ class AudioPlayerManager(
         }
     }
 
+    /**
+     * Reproduz o arquivo de áudio e aguarda sua duração real antes de retornar,
+     * garantindo sincronismo na fila sequencial de reprodução.
+     */
+    override suspend fun playAudioAndWait(pathOrUri: String?): Boolean {
+        if (pathOrUri.isNullOrBlank()) return false
+
+        val cleanPath = if (pathOrUri.startsWith("file://")) {
+            pathOrUri.removePrefix("file://")
+        } else {
+            pathOrUri
+        }
+
+        val durationMs = getAudioDurationMs(cleanPath)
+        val played = playAudio(cleanPath)
+        if (played) {
+            delay(durationMs)
+        }
+        return played
+    }
+
+    private fun getAudioDurationMs(filePath: String): Long {
+        val file = File(filePath)
+        if (!file.exists()) return DEFAULT_AUDIO_DURATION_MS
+
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(filePath)
+            val timeString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val parsedDuration = timeString?.toLongOrNull() ?: DEFAULT_AUDIO_DURATION_MS
+            parsedDuration.coerceIn(100L, MAX_ALLOWED_DURATION_MS)
+        } catch (e: Exception) {
+            Log.w(TAG, "Falha ao obter duração do áudio $filePath: ${e.message}")
+            DEFAULT_AUDIO_DURATION_MS
+        } finally {
+            try {
+                retriever.release()
+            } catch (ignored: Exception) {}
+        }
+    }
+
     private suspend fun loadAndPlay(filePath: String): Boolean = suspendCancellableCoroutine { continuation ->
         try {
             val soundId = soundPool.load(filePath, 1)
@@ -137,3 +184,4 @@ class AudioPlayerManager(
         }
     }
 }
+

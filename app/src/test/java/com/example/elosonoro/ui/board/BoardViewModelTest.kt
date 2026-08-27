@@ -365,12 +365,14 @@ class BoardViewModelTest {
 
     private class FakeAudioPlayer : AudioPlayer {
         override suspend fun playAudio(pathOrUri: String?): Boolean = true
+        override suspend fun playAudioAndWait(pathOrUri: String?): Boolean = true
         override fun stopAll() {}
         override fun release() {}
     }
 
     private class FakeTtsPlayer : TtsPlayer {
         override fun speak(text: String, queueMode: Int): Boolean = true
+        override suspend fun speakAndWait(text: String): Boolean = true
         override fun stop() {}
         override fun release() {}
         override fun isReady(): Boolean = true

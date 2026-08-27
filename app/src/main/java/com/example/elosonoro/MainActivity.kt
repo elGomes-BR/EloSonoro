@@ -1,6 +1,8 @@
 package com.example.elosonoro
 
+import android.Manifest
 import android.app.Dialog
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -22,6 +24,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.elosonoro.data.local.entity.PlateEntity
 import com.example.elosonoro.data.local.entity.ProfileEntity
+import com.example.elosonoro.data.media.AudioRecorder
+import com.example.elosonoro.data.media.FileManager
 import com.example.elosonoro.data.media.SoundPlaybackCoordinator
 import com.example.elosonoro.util.formatPlateName
 import com.example.elosonoro.ui.arasaac.ArasaacPictogramAdapter
@@ -42,12 +46,15 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
+import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: BoardViewModel by viewModel()
     private val arasaacViewModel: ArasaacSearchViewModel by viewModel()
     private val soundCoordinator: SoundPlaybackCoordinator by inject()
+    private val audioRecorder: AudioRecorder by inject()
+    private val fileManager: FileManager by inject()
 
     private lateinit var recyclerPlates: RecyclerView
     private lateinit var plateAdapter: PlateAdapter
@@ -66,6 +73,7 @@ class MainActivity : AppCompatActivity() {
     // Image & Audio Picker Contracts
     private var pendingImagePreviewCallback: ((Uri) -> Unit)? = null
     private var pendingAudioPickerCallback: ((Uri) -> Unit)? = null
+    private var pendingRecordAudioAction: (() -> Unit)? = null
 
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { pendingImagePreviewCallback?.invoke(it) }
@@ -73,6 +81,26 @@ class MainActivity : AppCompatActivity() {
 
     private val selectAudioLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { pendingAudioPickerCallback?.invoke(it) }
+    }
+
+    private val requestAudioPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            pendingRecordAudioAction?.invoke()
+        } else {
+            Toast.makeText(this, "Permissão de microfone necessária para gravar áudio.", Toast.LENGTH_LONG).show()
+        }
+        pendingRecordAudioAction = null
+    }
+
+    private fun checkAndRequestAudioPermission(onGranted: () -> Unit) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            onGranted()
+        } else {
+            pendingRecordAudioAction = onGranted
+            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -276,6 +304,7 @@ class MainActivity : AppCompatActivity() {
         val btnSelectImage: MaterialButton = dialog.findViewById(R.id.btnSelectImage)
         val btnClearImage: MaterialButton = dialog.findViewById(R.id.btnClearImage)
         val txtAudioStatus: TextView = dialog.findViewById(R.id.txtAudioStatus)
+        val btnRecordAudio: MaterialButton = dialog.findViewById(R.id.btnRecordAudio)
         val btnSelectAudio: MaterialButton = dialog.findViewById(R.id.btnSelectAudio)
         val btnTestAudio: MaterialButton = dialog.findViewById(R.id.btnTestAudio)
         val btnClearAudio: MaterialButton = dialog.findViewById(R.id.btnClearAudio)
@@ -294,6 +323,42 @@ class MainActivity : AppCompatActivity() {
             txtDialogTitle.text = getString(R.string.add_plate)
             updateImagePreview(null, imgPreview, btnClearImage)
             updateAudioStatus(null, txtAudioStatus, btnClearAudio)
+        }
+
+        // Gravar Áudio pelo Microfone (máx. 5s - Spec 1.1 e 2.4)
+        btnRecordAudio.setOnClickListener {
+            if (audioRecorder.isRecording()) {
+                val recordedPath = audioRecorder.stopRecording()
+                btnRecordAudio.text = "Gravar Voz (5s)"
+                if (!recordedPath.isNullOrBlank()) {
+                    selectedAudioUriString = recordedPath
+                    updateAudioStatus(selectedAudioUriString, txtAudioStatus, btnClearAudio)
+                }
+            } else {
+                checkAndRequestAudioPermission {
+                    val audioDir = fileManager.getAudioDirectory()
+                    if (!audioDir.exists()) audioDir.mkdirs()
+                    val targetPath = File(audioDir, "audio_rec_${UUID.randomUUID()}.mp4").absolutePath
+
+                    btnRecordAudio.text = "Gravando... (máx 5s)"
+                    txtAudioStatus.text = "Gravando áudio do usuário (até 5 segundos)..."
+
+                    val started = audioRecorder.startRecording(targetPath) {
+                        // Callback quando o limite de 5s for atingido
+                        runOnUiThread {
+                            btnRecordAudio.text = "Gravar Voz (5s)"
+                            selectedAudioUriString = targetPath
+                            updateAudioStatus(selectedAudioUriString, txtAudioStatus, btnClearAudio)
+                            Toast.makeText(this@MainActivity, "Limite de gravação de 5s atingido.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    if (!started) {
+                        btnRecordAudio.text = "Gravar Voz (5s)"
+                        txtAudioStatus.text = "Falha ao acessar microfone para gravação."
+                    }
+                }
+            }
         }
 
         // Buscar na ARASAAC (Spec 2.2: Sugestão Automática de Nome)
@@ -324,8 +389,12 @@ class MainActivity : AppCompatActivity() {
             updateImagePreview(null, imgPreview, btnClearImage)
         }
 
-        // Escolher Áudio
+        // Escolher Áudio de Arquivo
         btnSelectAudio.setOnClickListener {
+            if (audioRecorder.isRecording()) {
+                audioRecorder.stopRecording()
+                btnRecordAudio.text = "Gravar Voz (5s)"
+            }
             pendingAudioPickerCallback = { uri ->
                 selectedAudioUriString = uri.toString()
                 updateAudioStatus(selectedAudioUriString, txtAudioStatus, btnClearAudio)
@@ -335,6 +404,10 @@ class MainActivity : AppCompatActivity() {
 
         // Ouvir Teste
         btnTestAudio.setOnClickListener {
+            if (audioRecorder.isRecording()) {
+                audioRecorder.stopRecording()
+                btnRecordAudio.text = "Gravar Voz (5s)"
+            }
             val name = edtPlateName.text?.toString() ?: ""
             lifecycleScope.launch {
                 soundCoordinator.play(plateName = name.ifBlank { "Teste sonoro" }, audioUri = selectedAudioUriString)
@@ -343,16 +416,35 @@ class MainActivity : AppCompatActivity() {
 
         // Remover Áudio
         btnClearAudio.setOnClickListener {
+            if (audioRecorder.isRecording()) {
+                audioRecorder.stopRecording()
+                btnRecordAudio.text = "Gravar Voz (5s)"
+            }
             selectedAudioUriString = null
             updateAudioStatus(null, txtAudioStatus, btnClearAudio)
         }
 
+        dialog.setOnDismissListener {
+            if (audioRecorder.isRecording()) {
+                audioRecorder.stopRecording()
+            }
+        }
+
         btnCancelPlate.setOnClickListener {
+            if (audioRecorder.isRecording()) {
+                audioRecorder.stopRecording()
+            }
             dialog.dismiss()
         }
 
         // Botão Salvar (Validação Estrita)
         btnSavePlate.setOnClickListener {
+            if (audioRecorder.isRecording()) {
+                val path = audioRecorder.stopRecording()
+                if (!path.isNullOrBlank()) {
+                    selectedAudioUriString = path
+                }
+            }
             val name = edtPlateName.text?.toString()?.trim() ?: ""
             if (name.isBlank()) {
                 inputLayoutPlateName.error = getString(R.string.name_required)

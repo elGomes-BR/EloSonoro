@@ -80,7 +80,7 @@ Lista de tarefas pendentes.
 - [x] Criar testes unitários para a rotina de capitalização/sanitização de nomes e para o preenchimento automático por termo ARASAAC.
 
 ## Refatoração 8: Fila de Reprodução Sequencial e Limite de Gravação de Áudio (Spec 1.1, 2.1, 2.4 e Plan 4, 7.4.1)
-- [ ] Implementar `AudioRecorderManager` com limite máximo estrito de 5 segundos de gravação de voz e interrupção automática ao atingir o tempo.
-- [ ] Integrar `UtteranceProgressListener` no `TtsManager` para escutar e emitir callbacks de conclusão e erro de síntese vocal.
-- [ ] Implementar estrutura de fila sequencial (FIFO) no `SoundPlaybackCoordinator` / `PlaybackQueueManager` para coordenar a reprodução ordenada de múltiplas placas aguardando o término do áudio/TTS anterior.
-- [ ] Criar testes unitários para o enfileiramento sequencial de reprodução sonora (FIFO) e validação do limite de 5 segundos na gravação.
+- [x] Implementar `AudioRecorderManager` com limite máximo estrito de 5 segundos de gravação de voz e interrupção automática ao atingir o tempo.
+- [x] Integrar `UtteranceProgressListener` no `TtsManager` para escutar e emitir callbacks de conclusão e erro de síntese vocal.
+- [x] Implementar estrutura de fila sequencial (FIFO) no `SoundPlaybackCoordinator` / `PlaybackQueueManager` para coordenar a reprodução ordenada de múltiplas placas aguardando o término do áudio/TTS anterior.
+- [x] Criar testes unitários para o enfileiramento sequencial de reprodução sonora (FIFO) e validação do limite de 5 segundos na gravação.

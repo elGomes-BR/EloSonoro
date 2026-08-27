@@ -95,6 +95,41 @@ class SoundPlaybackCoordinatorTest {
         assertTrue(fakeAudioPlayer.playedAudios.isEmpty())
     }
 
+    @Test
+    fun testSequentialQueueExecutionOrder() = runTest {
+        val plate1 = PlateEntity(name = "Eu", audioUri = null)
+        val plate2 = PlateEntity(name = "Quero", audioUri = null)
+        val plate3 = PlateEntity(name = "Brincar", audioUri = null)
+
+        val executionLog = mutableListOf<String>()
+        fakeTtsPlayer.onSpeakAction = { text ->
+            executionLog.add("START_$text")
+            executionLog.add("END_$text")
+        }
+
+        // Executa as placas
+        coordinator.playPlate(plate1)
+        coordinator.playPlate(plate2)
+        coordinator.playPlate(plate3)
+
+        assertEquals(listOf("Eu", "Quero", "Brincar"), fakeTtsPlayer.spokenTexts)
+        assertEquals(
+            listOf("START_Eu", "END_Eu", "START_Quero", "END_Quero", "START_Brincar", "END_Brincar"),
+            executionLog
+        )
+    }
+
+    @Test
+    fun testPlaySequentialList() = runTest {
+        val plate1 = PlateEntity(name = "Por favor", audioUri = null)
+        val plate2 = PlateEntity(name = "Obrigado", audioUri = null)
+
+        val success = coordinator.playSequential(listOf(plate1, plate2))
+
+        assertTrue(success)
+        assertEquals(listOf("Por favor", "Obrigado"), fakeTtsPlayer.spokenTexts)
+    }
+
     // Fakes para teste desacoplado e de alta performance
     private class FakeFileManager : FileManager {
         val existingFiles = mutableSetOf<String>()
@@ -115,10 +150,16 @@ class SoundPlaybackCoordinatorTest {
     private class FakeAudioPlayer : AudioPlayer {
         val playedAudios = mutableListOf<String?>()
         var nextPlayResult = true
+        var onPlayAction: ((String?) -> Unit)? = null
 
         override suspend fun playAudio(pathOrUri: String?): Boolean {
             playedAudios.add(pathOrUri)
+            onPlayAction?.invoke(pathOrUri)
             return nextPlayResult
+        }
+
+        override suspend fun playAudioAndWait(pathOrUri: String?): Boolean {
+            return playAudio(pathOrUri)
         }
 
         override fun stopAll() {}
@@ -128,10 +169,16 @@ class SoundPlaybackCoordinatorTest {
     private class FakeTtsPlayer : TtsPlayer {
         val spokenTexts = mutableListOf<String>()
         var nextSpeakResult = true
+        var onSpeakAction: ((String) -> Unit)? = null
 
         override fun speak(text: String, queueMode: Int): Boolean {
             spokenTexts.add(text)
+            onSpeakAction?.invoke(text)
             return nextSpeakResult
+        }
+
+        override suspend fun speakAndWait(text: String): Boolean {
+            return speak(text)
         }
 
         override fun stop() {}
