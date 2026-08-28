@@ -84,3 +84,11 @@ Lista de tarefas pendentes.
 - [x] Integrar `UtteranceProgressListener` no `TtsManager` para escutar e emitir callbacks de conclusão e erro de síntese vocal.
 - [x] Implementar estrutura de fila sequencial (FIFO) no `SoundPlaybackCoordinator` / `PlaybackQueueManager` para coordenar a reprodução ordenada de múltiplas placas aguardando o término do áudio/TTS anterior.
 - [x] Criar testes unitários para o enfileiramento sequencial de reprodução sonora (FIFO) e validação do limite de 5 segundos na gravação.
+
+## Refatoração 9: Acessibilidade de UI, Menu Centralizado, Visibilidade Condicional e Margens de Segurança (Spec 2.3, 3.1, 3.2, 3.3, 3.4 e Plan 7.1, 7.2, 7.3, 7.4, 7.5)
+- [x] Criar recursos visuais vetoriais de ícones para estados de operação (cadeado fechado para Modo de Uso e cadeado aberto para Modo Edição) e layout da janela do Menu Centralizado (`dialog_main_menu.xml` ou `bottom_sheet_main_menu.xml`).
+- [x] Implementar o componente de Menu Centralizado (Bottom Sheet / Dialog) contendo o Seletor de Densidade (comutação estrita entre 2, 4 ou 6 colunas), o Toggle Unificado de Modo (texto descritivo + ícone de cadeado) e a Listagem de Categorias (Perfis) para filtragem da prancha principal.
+- [x] Atualizar a tela principal (`activity_main.xml` e `MainActivity.kt`) para exibir na top bar apenas o ícone do estado ativo atual (cadeado fechado ou aberto) e o botão dedicado para abertura do Menu Centralizado.
+- [x] Implementar a visibilidade condicional da barra de pesquisa inteligente na tela principal, ocultando-a completamente (`View.GONE`) no Modo de Uso (`isEditMode = false`) e reativando-a (`View.VISIBLE`) no Modo Edição (`isEditMode = true`).
+- [x] Reestruturar os layouts para aplicar margens internas (`padding`) e externas (`margins`) significativamente ampliadas no topo e na base da prancha principal, afastando os botões de ação ("Adicionar Nova Placa" e "Menu") das bordas físicas e prevenindo interferência com as barras de status e navegação do SO.
+- [x] Criar testes unitários e de interface para validar a alternância do toggle unificado, a visibilidade condicional da barra de busca e a comutação estrita de densidade (2, 4 ou 6 colunas).

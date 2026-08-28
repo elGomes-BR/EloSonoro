@@ -112,7 +112,7 @@ class BoardViewModelTest {
     }
 
     @Test
-    fun testSetSpanCountUpdatesState() = runTest(testDispatcher) {
+    fun testSetSpanCountUpdatesStateForTwoFourAndSixColumns() = runTest(testDispatcher) {
         viewModel.setSpanCount(2)
         advanceUntilIdle()
         assertEquals(2, viewModel.uiState.value.spanCount)
@@ -120,6 +120,10 @@ class BoardViewModelTest {
         viewModel.setSpanCount(4)
         advanceUntilIdle()
         assertEquals(4, viewModel.uiState.value.spanCount)
+
+        viewModel.setSpanCount(6)
+        advanceUntilIdle()
+        assertEquals(6, viewModel.uiState.value.spanCount)
     }
 
     @Test

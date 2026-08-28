@@ -62,7 +62,7 @@ class PreferencesManager(
     override fun getSpanCount(): Int = _spanCount.value
 
     override fun setSpanCount(spanCount: Int) {
-        val validSpan = if (spanCount in listOf(2, 4)) spanCount else DEFAULT_SPAN_COUNT
+        val validSpan = if (spanCount in listOf(2, 4, 6)) spanCount else DEFAULT_SPAN_COUNT
         sharedPreferences.edit().putInt(KEY_SPAN_COUNT, validSpan).apply()
         _spanCount.value = validSpan
     }

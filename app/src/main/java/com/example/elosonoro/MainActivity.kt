@@ -11,6 +11,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -59,12 +60,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerPlates: RecyclerView
     private lateinit var plateAdapter: PlateAdapter
     private lateinit var gridLayoutManager: GridLayoutManager
-    private lateinit var chipGroupCategories: ChipGroup
-    private lateinit var chipAllPlates: Chip
-    private lateinit var chipAddCategory: Chip
-    private lateinit var chipCurrentMode: Chip
-    private lateinit var btnToggleMode: MaterialButton
-    private lateinit var btnGridSpan: MaterialButton
+    private lateinit var imgModeIndicator: ImageView
+    private lateinit var btnOpenMenu: MaterialButton
+    private lateinit var layoutSearchContainer: LinearLayout
     private lateinit var fabAddPlate: ExtendedFloatingActionButton
     private lateinit var edtSearch: TextInputEditText
     private lateinit var txtEmptyState: TextView
@@ -115,12 +113,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun initViews() {
         recyclerPlates = findViewById(R.id.recyclerPlates)
-        chipGroupCategories = findViewById(R.id.chipGroupCategories)
-        chipAllPlates = findViewById(R.id.chipAllPlates)
-        chipAddCategory = findViewById(R.id.chipAddCategory)
-        chipCurrentMode = findViewById(R.id.chipCurrentMode)
-        btnToggleMode = findViewById(R.id.btnToggleMode)
-        btnGridSpan = findViewById(R.id.btnGridSpan)
+        imgModeIndicator = findViewById(R.id.imgModeIndicator)
+        btnOpenMenu = findViewById(R.id.btnOpenMenu)
+        layoutSearchContainer = findViewById(R.id.layoutSearchContainer)
         fabAddPlate = findViewById(R.id.fabAddPlate)
         edtSearch = findViewById(R.id.edtSearch)
         txtEmptyState = findViewById(R.id.txtEmptyState)
@@ -140,40 +135,29 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
-        gridLayoutManager = GridLayoutManager(this, 4)
+        val initialSpan = viewModel.uiState.value.spanCount
+        gridLayoutManager = GridLayoutManager(this, if (initialSpan in listOf(2, 4, 6)) initialSpan else 4)
         recyclerPlates.layoutManager = gridLayoutManager
         recyclerPlates.adapter = plateAdapter
     }
 
     private fun setupListeners() {
-        // Toggle de Modo de Uso / Edição
-        btnToggleMode.setOnClickListener {
-            val isEdit = viewModel.toggleEditMode()
-            val msg = if (isEdit) "Modo de Edição ativado" else "Modo de Uso ativado"
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        // Botão para abrir o Menu Centralizado
+        btnOpenMenu.setOnClickListener {
+            showMainMenuDialog()
         }
 
-        // Alteração de spanCount da grade
-        btnGridSpan.setOnClickListener {
-            showSpanCountDialog()
+        // Toque no ícone do modo também abre o Menu Centralizado
+        imgModeIndicator.setOnClickListener {
+            showMainMenuDialog()
         }
 
-        // Chip Todas as Placas
-        chipAllPlates.setOnClickListener {
-            viewModel.selectProfile(null)
-        }
-
-        // Chip Adicionar Categoria
-        chipAddCategory.setOnClickListener {
-            showProfileEditorDialog(null)
-        }
-
-        // FAB Nova Placa
+        // FAB Nova Placa (visível apenas no Modo Edição)
         fabAddPlate.setOnClickListener {
             showPlateEditorDialog(null)
         }
 
-        // Busca em tempo real
+        // Busca em tempo real na prancha
         edtSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -201,29 +185,27 @@ class MainActivity : AppCompatActivity() {
         plateAdapter.setEditMode(state.isEditMode)
         plateAdapter.submitList(state.plates)
 
-        // Atualiza layout manager com o spanCount configurado
-        if (gridLayoutManager.spanCount != state.spanCount) {
-            gridLayoutManager.spanCount = state.spanCount
+        // Atualiza layout manager com o spanCount configurado (2, 4 ou 6)
+        val validSpan = if (state.spanCount in listOf(2, 4, 6)) state.spanCount else 4
+        if (gridLayoutManager.spanCount != validSpan) {
+            gridLayoutManager.spanCount = validSpan
             recyclerPlates.adapter?.notifyDataSetChanged()
         }
 
-        // Atualiza visual do Modo de Operação
+        // Atualiza visual do Modo de Operação (Cadeado Fechado / Aberto) e Visibilidade Condicional da Busca
         if (state.isEditMode) {
-            chipCurrentMode.text = getString(R.string.mode_edit)
-            chipCurrentMode.setTextColor(ContextCompat.getColor(this, R.color.mode_edit_badge))
-            chipCurrentMode.setChipBackgroundColorResource(R.color.mode_edit_badge_bg)
-            chipAddCategory.visibility = View.VISIBLE
+            imgModeIndicator.setImageResource(R.drawable.ic_lock_open)
+            imgModeIndicator.setColorFilter(ContextCompat.getColor(this, R.color.mode_edit_badge))
+            imgModeIndicator.contentDescription = getString(R.string.mode_edit)
+            layoutSearchContainer.visibility = View.VISIBLE
             fabAddPlate.visibility = View.VISIBLE
         } else {
-            chipCurrentMode.text = getString(R.string.mode_use)
-            chipCurrentMode.setTextColor(ContextCompat.getColor(this, R.color.mode_use_badge))
-            chipCurrentMode.setChipBackgroundColorResource(R.color.mode_use_badge_bg)
-            chipAddCategory.visibility = View.GONE
+            imgModeIndicator.setImageResource(R.drawable.ic_lock_closed)
+            imgModeIndicator.setColorFilter(ContextCompat.getColor(this, R.color.mode_use_badge))
+            imgModeIndicator.contentDescription = getString(R.string.mode_use)
+            layoutSearchContainer.visibility = View.GONE
             fabAddPlate.visibility = View.GONE
         }
-
-        // Renderiza Chips de Categorias
-        renderCategoryChips(state.profiles, state.selectedProfileId, state.isEditMode)
 
         // Mensagens ao usuário
         state.userMessage?.let { msg ->
@@ -232,24 +214,128 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun renderCategoryChips(
+    /**
+     * Exibe a janela modal de Menu Centralizado contendo:
+     * 1. Seletor Unificado de Modo (Toggle com status e ícones de cadeado).
+     * 2. Seletor de Densidade (2, 4 ou 6 colunas).
+     * 3. Seletor de Categorias (Perfis) para filtragem da prancha.
+     */
+    private fun showMainMenuDialog() {
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        dialog.setContentView(R.layout.dialog_main_menu)
+
+        val cardModeToggle: com.google.android.material.card.MaterialCardView = dialog.findViewById(R.id.cardModeToggle) ?: return
+        val imgModeLock: ImageView = dialog.findViewById(R.id.imgModeLock) ?: return
+        val txtModeStatus: TextView = dialog.findViewById(R.id.txtModeStatus) ?: return
+        val switchMode: com.google.android.material.materialswitch.MaterialSwitch = dialog.findViewById(R.id.switchMode) ?: return
+        val toggleGroupSpan: com.google.android.material.button.MaterialButtonToggleGroup = dialog.findViewById(R.id.toggleGroupSpan) ?: return
+        val chipGroupMenuCategories: ChipGroup = dialog.findViewById(R.id.chipGroupMenuCategories) ?: return
+        val chipMenuAllPlates: Chip = dialog.findViewById(R.id.chipMenuAllPlates) ?: return
+        val chipMenuAddCategory: Chip = dialog.findViewById(R.id.chipMenuAddCategory) ?: return
+        val btnCloseMenu: MaterialButton = dialog.findViewById(R.id.btnCloseMenu) ?: return
+
+        fun updateModeToggleVisual(isEdit: Boolean) {
+            if (isEdit) {
+                imgModeLock.setImageResource(R.drawable.ic_lock_open)
+                imgModeLock.setColorFilter(ContextCompat.getColor(this, R.color.mode_edit_badge))
+                txtModeStatus.text = getString(R.string.mode_edit)
+                txtModeStatus.setTextColor(ContextCompat.getColor(this, R.color.mode_edit_badge))
+                cardModeToggle.setCardBackgroundColor(ContextCompat.getColor(this, R.color.mode_edit_badge_bg))
+                cardModeToggle.strokeColor = ContextCompat.getColor(this, R.color.mode_edit_badge)
+                switchMode.isChecked = true
+            } else {
+                imgModeLock.setImageResource(R.drawable.ic_lock_closed)
+                imgModeLock.setColorFilter(ContextCompat.getColor(this, R.color.mode_use_badge))
+                txtModeStatus.text = getString(R.string.mode_use)
+                txtModeStatus.setTextColor(ContextCompat.getColor(this, R.color.mode_use_badge))
+                cardModeToggle.setCardBackgroundColor(ContextCompat.getColor(this, R.color.mode_use_badge_bg))
+                cardModeToggle.strokeColor = ContextCompat.getColor(this, R.color.mode_use_badge)
+                switchMode.isChecked = false
+            }
+        }
+
+        val currentState = viewModel.uiState.value
+        updateModeToggleVisual(currentState.isEditMode)
+
+        cardModeToggle.setOnClickListener {
+            val newMode = viewModel.toggleEditMode()
+            updateModeToggleVisual(newMode)
+            val msg = if (newMode) "Modo de Edição ativado" else "Modo de Uso ativado"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            renderMenuCategories(
+                chipGroupMenuCategories,
+                chipMenuAllPlates,
+                chipMenuAddCategory,
+                viewModel.uiState.value.profiles,
+                viewModel.uiState.value.selectedProfileId,
+                newMode,
+                dialog
+            )
+        }
+
+        // Configuração do Seletor de Densidade (2, 4 ou 6 colunas)
+        when (currentState.spanCount) {
+            2 -> toggleGroupSpan.check(R.id.btnSpan2)
+            6 -> toggleGroupSpan.check(R.id.btnSpan6)
+            else -> toggleGroupSpan.check(R.id.btnSpan4)
+        }
+
+        toggleGroupSpan.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                val newSpan = when (checkedId) {
+                    R.id.btnSpan2 -> 2
+                    R.id.btnSpan6 -> 6
+                    else -> 4
+                }
+                viewModel.setSpanCount(newSpan)
+            }
+        }
+
+        // Configuração do Seletor de Categorias
+        renderMenuCategories(
+            chipGroupMenuCategories,
+            chipMenuAllPlates,
+            chipMenuAddCategory,
+            currentState.profiles,
+            currentState.selectedProfileId,
+            currentState.isEditMode,
+            dialog
+        )
+
+        btnCloseMenu.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun renderMenuCategories(
+        chipGroup: ChipGroup,
+        chipAllPlates: Chip,
+        chipAddCategory: Chip,
         profiles: List<ProfileEntity>,
         selectedProfileId: String?,
-        isEditMode: Boolean
+        isEditMode: Boolean,
+        dialog: Dialog
     ) {
-        // Mantém apenas o chipAllPlates e o chipAddCategory
         val chipsToRemove = mutableListOf<View>()
-        for (i in 0 until chipGroupCategories.childCount) {
-            val child = chipGroupCategories.getChildAt(i)
-            if (child.id != R.id.chipAllPlates && child.id != R.id.chipAddCategory) {
+        for (i in 0 until chipGroup.childCount) {
+            val child = chipGroup.getChildAt(i)
+            if (child.id != R.id.chipMenuAllPlates && child.id != R.id.chipMenuAddCategory) {
                 chipsToRemove.add(child)
             }
         }
-        chipsToRemove.forEach { chipGroupCategories.removeView(it) }
+        chipsToRemove.forEach { chipGroup.removeView(it) }
 
         chipAllPlates.isChecked = (selectedProfileId == null)
+        chipAllPlates.setOnClickListener {
+            viewModel.selectProfile(null)
+        }
 
-        val insertIndex = chipGroupCategories.indexOfChild(chipAddCategory)
+        chipAddCategory.visibility = if (isEditMode) View.VISIBLE else View.GONE
+        chipAddCategory.setOnClickListener {
+            dialog.dismiss()
+            showProfileEditorDialog(null)
+        }
+
+        val insertIndex = chipGroup.indexOfChild(chipAddCategory)
 
         profiles.forEach { profile ->
             val chip = Chip(this, null, com.google.android.material.R.style.Widget_Material3_Chip_Filter).apply {
@@ -263,32 +349,18 @@ class MainActivity : AppCompatActivity() {
                 if (isEditMode) {
                     isCloseIconVisible = true
                     setOnCloseIconClickListener {
+                        dialog.dismiss()
                         showDeleteProfileConfirmation(profile)
                     }
                     setOnLongClickListener {
+                        dialog.dismiss()
                         showProfileEditorDialog(profile)
                         true
                     }
                 }
             }
-            chipGroupCategories.addView(chip, if (insertIndex >= 0) insertIndex else chipGroupCategories.childCount)
+            chipGroup.addView(chip, if (insertIndex >= 0) insertIndex else chipGroup.childCount)
         }
-    }
-
-    private fun showSpanCountDialog() {
-        val options = arrayOf("2 Colunas (Acessibilidade Ampla)", "4 Colunas (Padrão)")
-        val spanValues = intArrayOf(2, 4)
-        val currentSpan = viewModel.uiState.value.spanCount
-        val checkedIndex = if (currentSpan == 2) 0 else 1
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.grid_columns)
-            .setSingleChoiceItems(options, checkedIndex) { dialog, which ->
-                viewModel.setSpanCount(spanValues[which])
-                dialog.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
     }
 
     private fun showPlateEditorDialog(plateToEdit: PlateEntity?, onSaved: ((PlateEntity) -> Unit)? = null) {

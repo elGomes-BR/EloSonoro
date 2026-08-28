@@ -20,5 +20,11 @@ Aplicativo de comunicação alternativa (CAA) para usuários não verbais e com 
 ## 4. Requisitos Críticos de Performance
 * **Latência de Áudio:** O tempo de resposta entre o toque na placa (input) e o início da reprodução sonora (output) é estritamente limitado a um máximo de 200ms.
 
-## 5. Telemetria
+## 5. Diretrizes Fundamentais de Acessibilidade e Redução de Sobrecarga Cognitiva
+* **Redução de Sobrecarga Cognitiva no Modo de Uso:** A tela principal da prancha de comunicação, durante o Modo de Uso, deve apresentar exclusivamente os elementos essenciais para a comunicação do usuário não verbal (placas) e o acesso mínimo às opções essenciais via menu centralizado. Ferramentas de gestão, configurações e barras de pesquisa devem ser ocultadas da interface principal para evitar ruído visual e dispersão de atenção.
+* **Acessibilidade Motora e Zonas Seguras de Toque (Touch Targets & Margens):** Todos os botões e elementos interativos da interface devem possuir dimensões adequadas e margens de segurança ampliadas (paddings internos e margins externas generosos) no topo e na base da tela. Os controles não devem ficar posicionados rente às bordas físicas do dispositivo nem sobrepor as áreas de interferência da barra de status e da barra de navegação/gestos do sistema operacional Android.
+* **Densidade Visual Adaptativa:** A prancha principal deve permitir a comutação estrita entre 2 colunas (acessibilidade motora ampla e maior destaque visual), 4 colunas (densidade padrão) e 6 colunas (densidade máxima).
+* **Proteção e Sinalização de Modos de Operação:** O estado de operação deve ser estritamente sinalizado pela metáfora visual de cadeado (cadeado fechado para Modo de Uso e cadeado aberto para Modo Edição), garantindo que a comunicação não seja interrompida por edições acidentais.
+
+## 6. Telemetria
 * **Coleta Silenciosa:** O sistema deve registrar em segundo plano o histórico de placas acionadas, horários e frequência. Estes dados formam a base para métricas de evolução.

@@ -28,8 +28,11 @@ Fluxo condicional executado ao tocar em uma placa:
 * Integração com API ARASAAC para pesquisa de pictogramas. O sistema deve baixar a imagem, salvá-la fisicamente e registrar a URI no banco de dados, em conformidade com as regras de persistência.
 * **Sugestão Automática de Nome:** Ao selecionar um pictograma da API ARASAAC, o sistema deve alterar automaticamente o campo "Nome" da placa no formulário de cadastro/edição para o termo sugerido pela API (formatado com a primeira letra capitalizada), garantindo maior corretude gramatical e agilidade.
 
-### 2.3 Pesquisa Inteligente
+### 2.3 Pesquisa Inteligente e Gerenciamento de Visibilidade
 * O sistema deve prover uma barra de busca capaz de filtrar e localizar placas rapidamente pelo atributo "Nome" na visualização principal.
+* **Gerenciamento de Visibilidade Condicionado ao Modo:** A exibição da barra de pesquisa na prancha principal é estritamente condicionada ao `ModeState`.
+  * **Modo de Uso (`isEditMode = false`):** A barra de busca deve ser totalmente ocultada da tela principal para eliminar sobrecarga cognitiva e distrações visuais para usuários.
+  * **Modo Edição (`isEditMode = true`):** A barra de busca é reativada e exibida na tela principal para permitir a rápida localização, edição e gestão de placas por cuidadores e pedagogos.
 
 ### 2.4 Cadastro de Placas
 * **Entradas Exigidas:** Nome (Texto, obrigatório).
@@ -48,15 +51,30 @@ Fluxo condicional executado ao tocar em uma placa:
 * **Edição de Perfis (Categorias):** Deve ser possível editar os perfis existentes. A interface deve permitir a alteração do nome da categoria, bem como a adição e remoção de placas associadas a ela.
 * **Deleção de Perfis (Categorias):** Deve ser possível deletar os perfis existentes. Ao deletar um perfil, as placas associadas a ele devem ser desvinculadas do perfil, mas não devem ser deletadas do banco de dados (proibição estrita de efeito cascata nas placas).
 
-## 3. Estados de Interface e Acessibilidade
+## 3. Estados de Interface, Menu Centralizado e Acessibilidade
 
-### 3.1 Modo Edição
-* **Estado Ativado:** Permite criação, edição, deleção de placas e categorias, além do gerenciamento de vínculos.
-* **Estado Desativado (Modo de Uso):** Interface bloqueada para modificações. Ações de deleção e edição de placas ou categorias são totalmente desabilitadas para evitar alterações acidentais pelo usuário final.
+### 3.1 Modo de Operação (Uso vs Edição)
+* **Modo de Uso (`isEditMode = false`):** Interface otimizada exclusivamente para comunicação. Ações de criação, edição e exclusão de placas e categorias são bloqueadas/desabilitadas. Representado visualmente pela metáfora de um **cadeado fechado**.
+* **Modo de Edição (`isEditMode = true`):** Habilita criação, edição, deleção de placas e categorias, além do gerenciamento de vínculos, reativando a barra de pesquisa na tela principal e o botão de adicionar nova placa. Representado visualmente pelo ícone de um **cadeado aberto**.
+* **Exibição do Ícone de Estado na Tela Inicial:** Na tela inicial/principal do aplicativo, deve ser exibido **estritamente o ícone representativo do estado atual de operação** (cadeado fechado no Modo de Uso ou cadeado aberto no Modo Edição), sem elementos textuais adicionais de modo que gerem sobrecarga visual.
+* **Seletor de Modo Unificado no Menu:** Dentro do menu centralizado, a caixa de texto indicadora de status e o controle de alternância são unificados em um único componente de interface (toggle/switch) com o texto correspondente e o respectivo ícone (cadeado fechado / cadeado aberto), mantendo a reatividade e a emissão de estado via `isEditModeFlow`.
 
 ### 3.2 Grade de Acessibilidade Motora
-* A interface (UI) da prancha de comunicação deve possuir controle de densidade visual.
-* A interface deve exibir uma grade de exibição flexível. Os layouts permitidos por tela são estritamente: 2 colunas ou 4 colunas, com rolagem vertical.
+* A interface (UI) da prancha de comunicação deve possuir controle de densidade visual estrito.
+* Os layouts permitidos por tela são estritamente: **2 colunas** (máxima área de toque e clareza visual), **4 colunas** (densidade padrão), **6 colunas** (densidade máxima), com suporte à rolagem vertical.
+* A comutação entre as densidades de 2, 4 ou 6 colunas é disponibilizada como uma ação rápida dentro do Menu Centralizado.
+
+### 3.3 Menu Centralizado de Controle e Navegação
+* O sistema deve prover uma janela de menu centralizada (implementada via Bottom Sheet Dialog ou Dialog modal) acessível através de um botão discreto e dedicado na tela principal.
+* O Menu Centralizado migra e unifica os controles de configuração e navegação para despoluir a prancha principal:
+  1. **Seletor de Densidade (Colunas):** Ação rápida permitindo ao usuário alternar a grade de exibição (`spanCount`) do `RecyclerView` estritamente entre 2, 4 ou 6 colunas.
+  2. **Seletor de Modo (Uso/Edição):** Componente unificado (toggle) com texto descritivo do status e ícone de cadeado (fechado para Modo de Uso, aberto para Modo Edição), gerenciando a alternância com emissão via `isEditModeFlow`.
+  3. **Seletor de Categorias (Perfis):** Listagem de seleção de categorias para filtrar a prancha principal, incluindo a opção de exibir "Todas as Placas" e, quando no Modo Edição, opções para criação/edição de perfis.
+
+### 3.4 Margens de Segurança e Zonas de Toque (Touch Targets)
+* Os arquivos de layout da prancha principal devem aplicar margens internas (`padding`) e externas (`margins`) significativamente ampliadas nas extremidades do topo e da base da tela.
+* Os botões de ação ("Adicionar Nova Placa" e o próprio botão de abertura do "Menu Centralizado") não devem ficar encostados nas bordas físicas do dispositivo.
+* Todos os botões e áreas interativas devem ser posicionados com recuo e margem de segurança adequados em relação às zonas de interferência da barra de status e da barra de navegação/gestos do sistema operacional Android, prevenindo toques acidentais e saídas indesejadas do aplicativo.
 
 ## 4. Integração e Sincronização
 

@@ -19,7 +19,7 @@ class PreferencesManagerTest {
     }
 
     @Test
-    fun testSetSpanCountAcceptsOnlyTwoOrFourColumns() {
+    fun testSetSpanCountAcceptsOnlyTwoFourOrSixColumns() {
         // Inicial padrão é 4
         assertEquals(4, preferencesManager.getSpanCount())
 
@@ -32,6 +32,11 @@ class PreferencesManagerTest {
         preferencesManager.setSpanCount(4)
         assertEquals(4, preferencesManager.getSpanCount())
         assertEquals(4, fakePrefs.getInt("key_span_count", 4))
+
+        // 6 colunas é válido
+        preferencesManager.setSpanCount(6)
+        assertEquals(6, preferencesManager.getSpanCount())
+        assertEquals(6, fakePrefs.getInt("key_span_count", 4))
 
         // Outros valores (ex: 8, 16, 5) caem estritamente no valor padrão (4)
         preferencesManager.setSpanCount(8)

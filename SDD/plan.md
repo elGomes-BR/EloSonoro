@@ -122,25 +122,44 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 
 ## 7. Controle de UI, Estados e Acessibilidade Motora
 
-### 7.1 Gestão de Estados de Operação (`ModeState`)
-* **Modo Edição (`isEditMode = true`):**
-  * Habilita na UI botões e fluxos para criar, editar e excluir placas e categorias, além de vincular/desvincular placas.
-* **Modo de Uso (`isEditMode = false`):**
-  * Bloqueia alterações acidentais pelo usuário final. Elementos de edição, exclusão e adição têm visibilidade alterada (`View.GONE`) e interações desabilitadas.
-* O estado é mantido e emitido via `isEditModeFlow: StateFlow<Boolean>` através do `PreferencesManager`.
+### 7.1 Gestão de Estados de Operação (`ModeState`), Ícones e Visibilidade Reativa
+* **Estados de Operação e Metáfora Visual:**
+  * **Modo de Uso (`isEditMode = false`):** Interface focada unicamente na prancha de comunicação. Controles administrativos, barra de pesquisa, botão de adicionar placa e ações de exclusão/edição permanecem estritamente ocultos (`View.GONE`). Representado pelo ícone de **cadeado fechado** (`ic_lock_closed`).
+  * **Modo Edição (`isEditMode = true`):** Habilita ferramentas de edição, exibindo a barra de busca inteligente, o botão flutuante de adicionar placas (`fabAddPlate`) e os controles de edição/exclusão de itens. Representado pelo ícone de **cadeado aberto** (`ic_lock_open`).
+* **Exibição na Tela Inicial:**
+  * A tela principal exibe apenas o ícone representativo do modo atual (cadeado fechado ou cadeado aberto), eliminando rótulos de texto redundantes da tela inicial para evitar poluição visual.
+* **Componente Unificado no Menu Centralizado:**
+  * No menu de configurações/navegação, o status do modo e o controle de alternância são consolidados em um componente unificado (toggle/switch) com texto descritivo e ícone de cadeado.
+* **Emissão e Reatividade:**
+  * O estado é mantido em `UserPreferences` (`PreferencesManager`) e emitido reativamente via `isEditModeFlow: StateFlow<Boolean>`, atualizando dinamicamente a interface via `BoardUiState`.
 
-### 7.2 Grade de Acessibilidade Motora (Seção 3.2 da Spec)
+### 7.2 Grade de Acessibilidade Motora e Seletor de Densidade
 * A prancha principal utiliza `RecyclerView` com `GridLayoutManager`.
-* **Layouts Permitidos:** A grade de exibição flexível suporta estritamente **2 colunas ou 4 colunas**, com suporte à rolagem vertical.
-* A densidade da grade é configurável e alternável pelo usuário através de ação rápida na interface, sendo persistida via `PreferencesManager` (`SharedPreferences`) e observada via `spanCountFlow: StateFlow<Int>`.
+* **Layouts Permitidos:** A grade de exibição suporta estritamente **2 colunas** (ampla área de toque para usuários com dificuldades motoras ou acuidade visual reduzida), **4 colunas** (densidade padrão) ou **6 colunas** (densidade máxima), com suporte à rolagem vertical contínua.
+* **Ação Rápida no Menu:** A densidade da grade é alternável pelo usuário através de ação rápida no Menu Centralizado, sendo persistida via `PreferencesManager` e observada reativamente via `spanCountFlow: StateFlow<Int>`.
 
-### 7.3 Pesquisa Inteligente
+### 7.3 Menu Centralizado de Controle e Navegação (`MainMenuBottomSheetDialogFragment` / Diálogo de Menu)
+* **Arquitetura e Acionamento:**
+  * Janela modal centralizada (Bottom Sheet Dialog ou Dialog modal) acionada por um botão discreto e dedicado de fácil alcance na tela principal (`btnOpenMenu`).
+* **Componentes Migrados e Centralizados no Menu:**
+  1. **Seletor de Densidade (Colunas):** Ação rápida permitindo ao usuário comutar instantaneamente a grade entre 2, 4 ou 6 colunas via `viewModel.setSpanCount(2|4|6)`.
+  2. **Seletor de Modo (Uso/Edição):** Componente toggle unificado integrando status textual ("Modo de Uso" / "Modo de Edição") e ícone de cadeado (fechado / aberto), disparando `viewModel.toggleEditMode()`.
+  3. **Seletor de Categorias (Perfis):** Listagem interativa contendo a opção padrão "Todas as Placas" e os perfis cadastrados para filtragem da prancha principal. No Modo Edição, disponibiliza atalhos para criação e gerenciamento de categorias.
+
+### 7.4 Ajuste de Layout, Margens de Segurança e Touch Targets
+* **Afastamento das Bordas Físicas e Barras de Sistema:**
+  * `activity_main.xml` e os layouts principais recebem margens internas (`padding`) e externas (`margins`) significativamente ampliadas nas extremidades superior (topo) e inferior (base).
+  * O botão de acesso ao "Menu Centralizado" e o botão "Adicionar Nova Placa" (`fabAddPlate`) são posicionados com recuo de segurança reforçado (touch margins de segurança) em relação aos limites da tela.
+  * Isolamento contra interferência e acionamentos acidentais decorrentes de gestos ou toques próximos à barra de status (topo) e à barra de navegação/gestos do sistema operacional (base).
+
+### 7.5 Pesquisa Inteligente com Visibilidade Condicional
 * Barra de busca na prancha principal filtrando a lista de placas em tempo real pelo atributo `name`.
-* O `BoardViewModel` recebe as alterações do campo de busca e consulta o `PlateDao` via Flow, atualizando a exibição sem recarregar a tela inteira.
+* O `BoardViewModel` processa a consulta via Flow reativo conectado ao `PlateDao`.
+* **Regra de Visibilidade Estrita:** A barra de busca (`inputLayoutSearch`) tem sua visibilidade atrelada a `BoardUiState.isEditMode`. Quando `isEditMode == false`, o container da busca é ocultado (`View.GONE`), reaparecendo (`View.VISIBLE`) apenas quando `isEditMode == true`.
 
-### 7.4 Gestão de Placas e Perfis: Telas, Validações e Ciclo de Vida (Seções 2.4 e 2.5 da Spec)
+### 7.6 Gestão de Placas e Perfis: Telas, Validações e Ciclo de Vida (Seções 2.4 e 2.5 da Spec)
 
-#### 7.4.1 Gestão de Placas
+#### 7.6.1 Gestão de Placas
 * **Cadastro de Placas:**
   * Validação síncrona obrigatória do campo `name` (bloqueia submissão e emite alerta visual se vazio).
   * Formatação automática do nome (primeira letra maiúscula, demais minúsculas) para garantir leitura natural pelo TTS.
@@ -152,7 +171,7 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
   * Diálogo de confirmação para exclusão da placa.
   * Ao confirmar, exclui o registro no banco Room e apaga obrigatoriamente todos os arquivos físicos de mídia (`imageUri` e `audioUri`) vinculados.
 
-#### 7.4.2 Gestão de Perfis (Categorias)
+#### 7.6.2 Gestão de Perfis (Categorias)
 * **Cadastro de Perfis:**
   * Validação do campo `name` (obrigatório, não vazio e único no banco). Bloqueio e mensagem explícita de erro em caso de duplicidade (`SQLiteConstraintException`).
   * Listagem de seleção alimentada pela totalidade das placas cadastradas no sistema (`PlateRepository.getAllPlates()`), independente de filtros ativos na tela principal.
