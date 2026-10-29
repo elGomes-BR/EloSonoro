@@ -15,7 +15,8 @@ class SavePlateUseCase(
         name: String,
         imageUri: String? = null,
         audioUri: String? = null,
-        id: String? = null
+        id: String? = null,
+        categoryIds: List<String>? = null
     ): Result<PlateEntity> {
         val formattedName = name.formatPlateName()
         if (formattedName.isBlank()) {
@@ -25,7 +26,8 @@ class SavePlateUseCase(
             name = formattedName,
             imageUri = imageUri,
             audioUri = audioUri,
-            id = id
+            id = id,
+            categoryIds = categoryIds
         )
     }
 }

@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@color/md_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,173 +13,293 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Título do Diálogo -->
         <TextView
             android:id="@+id/txtDialogTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/add_plate"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="@color/md_primary"
             android:layout_marginBottom="16dp" />
 
-        <!-- Campo Nome (Obrigatório) -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/inputLayoutPlateName"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        <!-- Bloco 1: Identificação -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardIdentification"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nome da Placa *"
-            app:errorEnabled="true"
-            android:layout_marginBottom="12dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edtPlateName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textCapSentences"
-                android:maxLines="1" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Seção de Imagem -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Imagem da Placa"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:textColor="@color/md_on_surface"
-            android:layout_marginBottom="8dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="90dp"
-                android:layout_height="90dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/md_background">
-
-                <ImageView
-                    android:id="@+id/imgPreview"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="fitCenter"
-                    tools:srcCompat="@android:drawable/ic_menu_gallery" />
-            </com.google.android.material.card.MaterialCardView>
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border"
+            app:cardBackgroundColor="@color/md_surface">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical"
-                android:layout_marginStart="12dp">
+                android:padding="16dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSearchArasaac"
-                    style="@style/Widget.Material3.Button.TonalButton"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Buscar na ARASAAC"
-                    android:textSize="12sp" />
+                    android:text="Identificação"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_primary"
+                    android:layout_marginBottom="12dp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSelectImage"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                <!-- Campo Nome (Obrigatório) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/inputLayoutPlateName"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Escolher da Galeria"
-                    android:textSize="12sp" />
+                    android:hint="Nome da Placa *"
+                    app:errorEnabled="true">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edtPlateName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences"
+                        android:maxLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Bloco 2: Mídia Visual -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardVisualMedia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border"
+            app:cardBackgroundColor="@color/md_surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Mídia Visual (Imagem)"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_primary"
+                    android:layout_marginBottom="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Pré-visualização da Imagem -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="96dp"
+                        android:layout_height="96dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="@color/card_border"
+                        app:cardBackgroundColor="@color/pictogram_container_bg">
+
+                        <ImageView
+                            android:id="@+id/imgPreview"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="4dp"
+                            android:scaleType="fitCenter"
+                            tools:srcCompat="@android:drawable/ic_menu_gallery" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Ações de Imagem -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="14dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSearchArasaac"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Buscar na ARASAAC"
+                            android:textSize="12sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSelectImage"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Escolher da Galeria"
+                            android:textSize="12sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnClearImage"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Remover Imagem"
+                            android:textColor="@color/color_error"
+                            android:textSize="11sp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Bloco 3: Mídia Sonora -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAudioMedia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border"
+            app:cardBackgroundColor="@color/md_surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Mídia Sonora (Áudio de Voz)"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/txtAudioStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Status: Síntetizador de voz"
+                    android:textSize="13sp"
+                    android:textColor="@color/md_secondary"
+                    android:layout_marginBottom="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="6dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRecordAudio"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
+                        android:text="Gravar Voz (5s)"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSelectAudio"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Escolher Arquivo"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnClearImage"
+                    android:id="@+id/btnTestAudio"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Remover Imagem"
+                    android:text="Ouvir Áudio Atual / Testar"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnClearAudio"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="Remover Áudio Gravado"
                     android:textColor="@color/color_error"
                     android:textSize="11sp"
                     android:visibility="gone" />
+
             </LinearLayout>
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Seção de Áudio -->
-        <TextView
+        <!-- Bloco 4: Categorização -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCategorization"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Áudio da Placa"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:textColor="@color/md_on_surface"
-            android:layout_marginBottom="8dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:background="@color/md_background"
-            android:layout_marginBottom="16dp">
-
-            <TextView
-                android:id="@+id/txtAudioStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Status: Síntese de Voz (TTS pelo nome)"
-                android:textSize="13sp"
-                android:textColor="@color/md_secondary"
-                android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/card_border"
+            app:cardBackgroundColor="@color/md_surface">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRecordAudio"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="0dp"
+                <TextView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
-                    android:text="Gravar Voz (5s)"
-                    android:textSize="12sp" />
+                    android:text="Categorização (Opcional)"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_primary"
+                    android:layout_marginBottom="4dp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSelectAudio"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="0dp"
+                <TextView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Escolher Arquivo"
-                    android:textSize="12sp" />
+                    android:text="Vincule esta placa a uma ou mais categorias existentes:"
+                    android:textSize="12sp"
+                    android:textColor="@color/md_secondary"
+                    android:layout_marginBottom="10dp" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupPlateCategories"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:chipSpacing="8dp" />
+
+                <TextView
+                    android:id="@+id/txtNoCategoriesAvailable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nenhuma categoria cadastrada no sistema."
+                    android:textSize="12sp"
+                    android:textColor="@color/md_secondary"
+                    android:visibility="gone" />
+
             </LinearLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTestAudio"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Ouvir Áudio Atual / Testar"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnClearAudio"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:text="Remover Áudio Gravado"
-                android:textColor="@color/color_error"
-                android:textSize="11sp"
-                android:visibility="gone" />
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Botões de Ação do Diálogo -->
         <LinearLayout
@@ -186,7 +307,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="end"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="4dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancelPlate"

@@ -1,30 +1,36 @@
 package com.example.elosonoro.data.repository
 
-import android.net.Uri
 import android.util.Log
+import androidx.room.withTransaction
+import com.example.elosonoro.data.local.EloSonoroDatabase
+import com.example.elosonoro.data.local.dao.CrossRefDao
 import com.example.elosonoro.data.local.dao.PlateDao
 import com.example.elosonoro.data.local.entity.PlateEntity
+import com.example.elosonoro.data.local.entity.PlateProfileCrossRef
+import com.example.elosonoro.data.local.entity.ProfileEntity
 import com.example.elosonoro.data.media.FileManager
 import com.example.elosonoro.domain.repository.PlateRepository
 import com.example.elosonoro.util.formatPlateName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileInputStream
 import java.util.UUID
 
 /**
  * Implementação do repositório de Placas.
- * Conforme constitution.md e spec.md (Seção 2.4):
+ * Conforme constitution.md e spec.md (Seção 2.4 e Plan 7.6.1):
  * - Move/copia mídias temporárias para o armazenamento privado do aplicativo (filesDir).
  * - Registra caminhos absolutos no banco Room (sem BLOBs).
  * - Bloqueia submissão de placas com nome vazio.
+ * - Salva transacionalmente os vínculos da placa com as categorias em PlateProfileCrossRef.
  */
 class PlateRepositoryImpl(
     private val plateDao: PlateDao,
     private val fileManager: FileManager,
+    private val crossRefDao: CrossRefDao? = null,
+    private val database: EloSonoroDatabase? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : PlateRepository {
 
@@ -42,11 +48,15 @@ class PlateRepositoryImpl(
 
     override fun searchPlates(query: String): Flow<List<PlateEntity>> = plateDao.searchPlatesByName(query)
 
+    override fun getProfilesForPlate(plateId: String): Flow<List<ProfileEntity>> =
+        crossRefDao?.getProfilesForPlate(plateId) ?: flowOf(emptyList())
+
     override suspend fun savePlate(
         name: String,
         imageUri: String?,
         audioUri: String?,
-        id: String?
+        id: String?,
+        categoryIds: List<String>?
     ): Result<PlateEntity> = withContext(ioDispatcher) {
         val formattedName = name.formatPlateName()
         if (formattedName.isBlank()) {
@@ -97,14 +107,38 @@ class PlateRepositoryImpl(
                 processMediaAudio(audioUri)
             }
 
+            val finalPlateId = plateId ?: UUID.randomUUID().toString()
             val plateEntity = PlateEntity(
-                id = plateId ?: UUID.randomUUID().toString(),
+                id = finalPlateId,
                 name = formattedName,
                 imageUri = permanentImagePath,
                 audioUri = permanentAudioPath
             )
 
-            plateDao.insert(plateEntity)
+            // Operação transacional de persistência da placa e vínculos com categorias (Plan 7.6.1)
+            val transactionalBlock: suspend () -> Unit = {
+                plateDao.insert(plateEntity)
+                if (crossRefDao != null && categoryIds != null) {
+                    if (plateId != null) {
+                        crossRefDao.deleteAllProfilesFromPlate(finalPlateId)
+                    }
+                    if (categoryIds.isNotEmpty()) {
+                        val crossRefs = categoryIds.map { profileId ->
+                            PlateProfileCrossRef(plateId = finalPlateId, profileId = profileId)
+                        }
+                        crossRefDao.insertAll(crossRefs)
+                    }
+                }
+            }
+
+            if (database != null) {
+                database.withTransaction {
+                    transactionalBlock()
+                }
+            } else {
+                transactionalBlock()
+            }
+
             Log.d(TAG, "Placa salva com sucesso: ${plateEntity.name} (id: ${plateEntity.id})")
             Result.success(plateEntity)
         } catch (e: Exception) {

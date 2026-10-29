@@ -100,11 +100,11 @@ Lista de tarefas pendentes.
 - [x] Validar a alternância dinâmica entre tema claro e tema escuro no dispositivo sem perdas de estado ou problemas de contraste nos pictogramas.
 
 ## Refatoração 11: Otimização do Cadastro de Placas e Busca na ARASAAC (Spec 2.2, 2.4 e Plan 5, 7.6.1)
-- [ ] Atualizar o fluxo do botão "Buscar na ARASAAC" no diálogo de placa para pré-preencher o campo de busca e disparar a consulta quando o campo "Nome da Placa" já possuir texto preenchido.
-- [ ] Redesenhar `dialog_plate_editor.xml` para despoluir a interface em blocos visuais limpos (Identificação, Mídias e Categorização).
-- [ ] Incluir seletor de categorias no diálogo de cadastro de placas permitindo associar opcionalmente a nova placa a categorias existentes no momento de sua criação.
-- [ ] Atualizar o fluxo de persistência (`SavePlateUseCase` / `PlateRepository`) para salvar transacionalmente os vínculos da placa com as categorias em `PlateProfileCrossRef`.
-- [ ] Criar testes unitários para a pré-alimentação da busca ARASAAC e para a persistência da relação placa-categoria no ato da criação.
+- [x] Atualizar o fluxo do botão "Buscar na ARASAAC" no diálogo de placa para pré-preencher o campo de busca e disparar a consulta quando o campo "Nome da Placa" já possuir texto preenchido.
+- [x] Redesenhar `dialog_plate_editor.xml` para despoluir a interface em blocos visuais limpos (Identificação, Mídias e Categorização).
+- [x] Incluir seletor de categorias no diálogo de cadastro de placas permitindo associar opcionalmente a nova placa a categorias existentes no momento de sua criação.
+- [x] Atualizar o fluxo de persistência (`SavePlateUseCase` / `PlateRepository`) para salvar transacionalmente os vínculos da placa com as categorias em `PlateProfileCrossRef`.
+- [x] Criar testes unitários para a pré-alimentação da busca ARASAAC e para a persistência da relação placa-categoria no ato da criação.
 
 ## Refatoração 12: Customização e Toggles do Modo de Uso no Menu Centralizado (Spec 2.3, 3.1, 3.3 e Plan 7.1, 7.3, 7.5)
 - [ ] Adicionar ao `PreferencesManager` e `UserPreferences` os estados persistidos para exibição opcional da barra de busca e de categorias no Modo de Uso (`showSearchInUseMode` e `showCategoriesInUseMode`).

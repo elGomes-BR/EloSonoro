@@ -145,6 +145,18 @@ class BoardViewModelTest {
     }
 
     @Test
+    fun testSavePlateWithCategoryIdsSuccess() = runTest(testDispatcher) {
+        viewModel.savePlate(
+            name = "Fruta",
+            categoryIds = listOf("cat-1", "cat-2")
+        )
+        advanceUntilIdle()
+
+        assertEquals(1, fakePlateRepository.platesList.size)
+        assertEquals("Fruta", fakePlateRepository.platesList.first().name)
+    }
+
+    @Test
     fun testCreateProfileBlankNameSetsValidationMessage() = runTest(testDispatcher) {
         viewModel.createProfile(name = "")
         advanceUntilIdle()
@@ -238,11 +250,14 @@ class BoardViewModelTest {
         override fun searchPlates(query: String): Flow<List<PlateEntity>> =
             flowOf(platesList.filter { it.name.contains(query, ignoreCase = true) })
 
+        override fun getProfilesForPlate(plateId: String): Flow<List<ProfileEntity>> = flowOf(emptyList())
+
         override suspend fun savePlate(
             name: String,
             imageUri: String?,
             audioUri: String?,
-            id: String?
+            id: String?,
+            categoryIds: List<String>?
         ): Result<PlateEntity> {
             if (name.isBlank()) return Result.failure(IllegalArgumentException("Nome obrigatório"))
             val plate = PlateEntity(id = id ?: "id-${platesList.size + 1}", name = name, imageUri = imageUri, audioUri = audioUri)

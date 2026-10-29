@@ -13,7 +13,9 @@ val repositoryModule = module {
     single<PlateRepository> {
         PlateRepositoryImpl(
             plateDao = get(),
-            fileManager = get()
+            fileManager = get(),
+            crossRefDao = get(),
+            database = get()
         )
     }
 

@@ -69,6 +69,9 @@ class BoardViewModel(
         }
     }
 
+    val isEditModeFlow: StateFlow<Boolean> = preferencesManager.isEditModeFlow
+    val spanCountFlow: StateFlow<Int> = preferencesManager.spanCountFlow
+
     val uiState: StateFlow<BoardUiState> = combine(
         profilesWithPlatesFlow,
         platesFlow,
@@ -119,13 +122,13 @@ class BoardViewModel(
         )
     )
 
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
     fun selectProfile(profileId: String?) {
         _selectedProfileId.value = profileId
         preferencesManager.setSelectedProfileId(profileId)
-    }
-
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
     }
 
     fun toggleEditMode(): Boolean {
@@ -148,11 +151,17 @@ class BoardViewModel(
 
     fun getAllPlates(): Flow<List<PlateEntity>> = plateRepository.getAllPlates()
 
+    fun getAllProfiles(): Flow<List<ProfileEntity>> = profileRepository.getAllProfiles()
+
+    fun getProfilesForPlate(plateId: String): Flow<List<ProfileEntity>> =
+        plateRepository.getProfilesForPlate(plateId)
+
     fun savePlate(
         name: String,
         imageUri: String? = null,
         audioUri: String? = null,
         id: String? = null,
+        categoryIds: List<String>? = null,
         profileIdToLink: String? = null,
         onSuccess: ((PlateEntity) -> Unit)? = null
     ) {
@@ -163,22 +172,28 @@ class BoardViewModel(
 
         viewModelScope.launch {
             _isLoading.value = true
+            val effectiveCategoryIds = when {
+                categoryIds != null -> {
+                    if (profileIdToLink != null && !categoryIds.contains(profileIdToLink)) {
+                        categoryIds + profileIdToLink
+                    } else {
+                        categoryIds
+                    }
+                }
+                profileIdToLink != null -> listOf(profileIdToLink)
+                _selectedProfileId.value != null && id == null -> listOfNotNull(_selectedProfileId.value)
+                else -> null
+            }
+
             val result = savePlateUseCase(
                 name = name,
                 imageUri = imageUri,
                 audioUri = audioUri,
-                id = id
+                id = id,
+                categoryIds = effectiveCategoryIds
             )
 
             result.onSuccess { savedPlate ->
-                // Se um perfil de destino foi selecionado, vincula a placa criada à categoria
-                val targetProfileId = profileIdToLink ?: _selectedProfileId.value
-                if (!targetProfileId.isNullOrBlank()) {
-                    profileRepository.addPlateToProfile(
-                        profileId = targetProfileId,
-                        plateId = savedPlate.id
-                    )
-                }
                 _userMessage.value = "Placa '${savedPlate.name}' salva com sucesso!"
                 onSuccess?.invoke(savedPlate)
             }.onFailure { error ->

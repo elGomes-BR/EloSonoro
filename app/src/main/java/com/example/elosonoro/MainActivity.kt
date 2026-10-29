@@ -43,6 +43,7 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -363,7 +364,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showPlateEditorDialog(plateToEdit: PlateEntity?, onSaved: ((PlateEntity) -> Unit)? = null) {
+    private fun showPlateEditorDialog(
+        plateToEdit: PlateEntity?,
+        defaultProfileId: String? = null,
+        onSaved: ((PlateEntity) -> Unit)? = null
+    ) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_plate_editor)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -380,6 +385,8 @@ class MainActivity : AppCompatActivity() {
         val btnSelectAudio: MaterialButton = dialog.findViewById(R.id.btnSelectAudio)
         val btnTestAudio: MaterialButton = dialog.findViewById(R.id.btnTestAudio)
         val btnClearAudio: MaterialButton = dialog.findViewById(R.id.btnClearAudio)
+        val chipGroupCategories: ChipGroup = dialog.findViewById(R.id.chipGroupPlateCategories)
+        val txtNoCategories: TextView = dialog.findViewById(R.id.txtNoCategoriesAvailable)
         val btnCancelPlate: MaterialButton = dialog.findViewById(R.id.btnCancelPlate)
         val btnSavePlate: MaterialButton = dialog.findViewById(R.id.btnSavePlate)
 
@@ -395,6 +402,48 @@ class MainActivity : AppCompatActivity() {
             txtDialogTitle.text = getString(R.string.add_plate)
             updateImagePreview(null, imgPreview, btnClearImage)
             updateAudioStatus(null, txtAudioStatus, btnClearAudio)
+        }
+
+        // Configuração dos chips de seleção de categorias (Plan 7.6.1 e Spec 2.4)
+        val checkedCategoryIds = mutableSetOf<String>()
+        if (plateToEdit == null) {
+            val initialCategory = defaultProfileId ?: viewModel.uiState.value.selectedProfileId
+            if (!initialCategory.isNullOrBlank()) {
+                checkedCategoryIds.add(initialCategory)
+            }
+        }
+
+        lifecycleScope.launch {
+            if (plateToEdit != null) {
+                try {
+                    val linkedProfiles = viewModel.getProfilesForPlate(plateToEdit.id).first()
+                    checkedCategoryIds.addAll(linkedProfiles.map { it.id })
+                } catch (_: Exception) {}
+            }
+            viewModel.getAllProfiles().collectLatest { allProfiles ->
+                chipGroupCategories.removeAllViews()
+                if (allProfiles.isEmpty()) {
+                    txtNoCategories.visibility = View.VISIBLE
+                } else {
+                    txtNoCategories.visibility = View.GONE
+                    allProfiles.forEach { profile ->
+                        val chip = Chip(this@MainActivity).apply {
+                            text = profile.name
+                            tag = profile.id
+                            isCheckable = true
+                            isChecked = checkedCategoryIds.contains(profile.id)
+                            setOnCheckedChangeListener { _, isChecked ->
+                                if (isChecked) {
+                                    checkedCategoryIds.add(profile.id)
+                                } else {
+                                    checkedCategoryIds.remove(profile.id)
+                                }
+                            }
+                        }
+                        chipGroupCategories.addView(chip)
+                    }
+                }
+            }
         }
 
         // Gravar Áudio pelo Microfone (máx. 5s - Spec 1.1 e 2.4)
@@ -433,9 +482,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Buscar na ARASAAC (Spec 2.2: Sugestão Automática de Nome)
+        // Buscar na ARASAAC (Spec 2.2: Sugestão Automática de Nome e Pré-preenchimento da Busca)
         btnSearchArasaac.setOnClickListener {
-            showArasaacSearchDialog { downloadedLocalPath, suggestedName ->
+            val currentName = edtPlateName.text?.toString()?.trim()
+            showArasaacSearchDialog(initialQuery = currentName.takeIf { !it.isNullOrBlank() }) { downloadedLocalPath, suggestedName ->
                 selectedImageUriString = downloadedLocalPath
                 updateImagePreview(downloadedLocalPath, imgPreview, btnClearImage)
                 val formattedSuggestedName = suggestedName.formatPlateName()
@@ -509,7 +559,7 @@ class MainActivity : AppCompatActivity() {
             dialog.dismiss()
         }
 
-        // Botão Salvar (Validação Estrita)
+        // Botão Salvar (Validação Estrita e Persistência Transacional)
         btnSavePlate.setOnClickListener {
             if (audioRecorder.isRecording()) {
                 val path = audioRecorder.stopRecording()
@@ -524,11 +574,13 @@ class MainActivity : AppCompatActivity() {
             }
             inputLayoutPlateName.error = null
 
+            val selectedCategoryIds = checkedCategoryIds.toList()
             viewModel.savePlate(
                 name = name,
                 imageUri = selectedImageUriString,
                 audioUri = selectedAudioUriString,
                 id = plateToEdit?.id,
+                categoryIds = selectedCategoryIds,
                 onSuccess = onSaved
             )
             dialog.dismiss()
@@ -566,7 +618,7 @@ class MainActivity : AppCompatActivity() {
             txtStatus.text = "Status: Síntese de Voz (TTS pelo nome)"
             btnClear.visibility = View.GONE
         } else {
-            txtStatus.text = "Status: Arquivo de áudio gravado configurado"
+            txtStatus.text = "Status: Áudio gravado"
             btnClear.visibility = View.VISIBLE
         }
     }
@@ -640,7 +692,7 @@ class MainActivity : AppCompatActivity() {
 
         // Atalho para criação rápida de placa no contexto da edição de perfil (Spec 2.5)
         btnQuickAddPlate.setOnClickListener {
-            showPlateEditorDialog(null) { newlyCreatedPlate ->
+            showPlateEditorDialog(null, defaultProfileId = profileToEdit?.id) { newlyCreatedPlate ->
                 selectionAdapter.addPlate(newlyCreatedPlate, select = true)
                 txtEmptyPlateSelection.visibility = if (selectionAdapter.itemCount == 0) View.VISIBLE else View.GONE
                 recyclerSelection.scrollToPosition(0)
@@ -673,7 +725,10 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showArasaacSearchDialog(onImageSelected: (savedLocalPath: String, suggestedName: String) -> Unit) {
+    private fun showArasaacSearchDialog(
+        initialQuery: String? = null,
+        onImageSelected: (savedLocalPath: String, suggestedName: String) -> Unit
+    ) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_arasaac_search)
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -729,6 +784,16 @@ class MainActivity : AppCompatActivity() {
             }
             override fun afterTextChanged(s: Editable?) {}
         })
+
+        // Pré-preenchimento da busca e disparo inicial caso fornecido (Spec 2.2)
+        if (!initialQuery.isNullOrBlank()) {
+            edtQuery.setText(initialQuery)
+            edtQuery.setSelection(initialQuery.length)
+            arasaacViewModel.searchImmediately(initialQuery)
+        } else {
+            edtQuery.setText("")
+            arasaacViewModel.searchImmediately("")
+        }
 
         btnClose.setOnClickListener { dialog.dismiss() }
         dialog.show()

@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -90,11 +91,31 @@ class ArasaacSearchViewModelTest {
         assertEquals("água mineral", returnedSuggestedName)
     }
 
+    @Test
+    fun testPreFeedSearchImmediatelyFromPlateNameTriggersQuery() = runTest(testDispatcher) {
+        fakeArasaacRepository.searchResult = listOf(
+            ArasaacPictogram(id = 10, name = "água", imageUrl = "https://static.arasaac.org/10.png")
+        )
+
+        // Simula o pré-preenchimento automático originado do campo "Nome da Placa" (Spec 2.2 e Plan 5)
+        viewModel.searchImmediately("Água")
+        advanceUntilIdle()
+
+        assertEquals("Água", fakeArasaacRepository.lastSearchedTerm)
+        val state = viewModel.uiState.value
+        assertEquals("Água", state.query)
+        assertEquals(1, state.pictograms.size)
+        assertEquals("água", state.pictograms.first().name)
+        assertFalse(state.isLoading)
+    }
+
     private class FakeArasaacRepository : ArasaacRepository {
         var searchResult = emptyList<ArasaacPictogram>()
         var downloadResult = "/files/images/img_arasaac.png"
+        var lastSearchedTerm: String? = null
 
         override suspend fun searchPictograms(term: String, locale: String): Result<List<ArasaacPictogram>> {
+            lastSearchedTerm = term
             return Result.success(searchResult)
         }
 

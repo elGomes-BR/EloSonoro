@@ -190,7 +190,16 @@ class BoardAccessibilityRefactorTest {
         override fun searchPlates(query: String): Flow<List<PlateEntity>> =
             flowOf(plates.filter { it.name.contains(query, ignoreCase = true) })
 
-        override suspend fun savePlate(name: String, imageUri: String?, audioUri: String?, id: String?): Result<PlateEntity> {
+        override fun getProfilesForPlate(plateId: String): Flow<List<com.example.elosonoro.data.local.entity.ProfileEntity>> =
+            flowOf(emptyList())
+
+        override suspend fun savePlate(
+            name: String,
+            imageUri: String?,
+            audioUri: String?,
+            id: String?,
+            categoryIds: List<String>?
+        ): Result<PlateEntity> {
             val plate = PlateEntity(id = id ?: "pl-${plates.size + 1}", name = name, imageUri = imageUri, audioUri = audioUri)
             plates.add(plate)
             return Result.success(plate)
