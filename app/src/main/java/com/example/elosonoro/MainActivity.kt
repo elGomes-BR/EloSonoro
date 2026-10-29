@@ -615,7 +615,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateAudioStatus(path: String?, txtStatus: TextView, btnClear: MaterialButton) {
         if (path.isNullOrBlank()) {
-            txtStatus.text = "Status: Síntese de Voz (TTS pelo nome)"
+            txtStatus.text = "Status: Síntetizador de voz"
             btnClear.visibility = View.GONE
         } else {
             txtStatus.text = "Status: Áudio gravado"
