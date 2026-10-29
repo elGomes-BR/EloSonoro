@@ -27,7 +27,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="120dp"
-            android:background="@color/md_background">
+            android:background="@color/pictogram_container_bg">
 
             <ImageView
                 android:id="@+id/imgPlate"

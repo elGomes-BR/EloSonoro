@@ -92,3 +92,23 @@ Lista de tarefas pendentes.
 - [x] Implementar a visibilidade condicional da barra de pesquisa inteligente na tela principal, ocultando-a completamente (`View.GONE`) no Modo de Uso (`isEditMode = false`) e reativando-a (`View.VISIBLE`) no Modo Edição (`isEditMode = true`).
 - [x] Reestruturar os layouts para aplicar margens internas (`padding`) e externas (`margins`) significativamente ampliadas no topo e na base da prancha principal, afastando os botões de ação ("Adicionar Nova Placa" e "Menu") das bordas físicas e prevenindo interferência com as barras de status e navegação do SO.
 - [x] Criar testes unitários e de interface para validar a alternância do toggle unificado, a visibilidade condicional da barra de busca e a comutação estrita de densidade (2, 4 ou 6 colunas).
+
+## Refatoração 10: Temas Claro/Escuro e Identidade Visual (Spec 3.5 e Plan 7.7, 7.8)
+- [x] Salvar e registrar a imagem mestre oficial do ícone em `res/drawable/app_icon.png` (512x512 px).
+- [x] Configurar a paleta de cores e temas Material 3 nos arquivos `values/themes.xml` e `values-night/themes.xml` assegurando conformidade de contraste para CAA (WCAG AAA/AA).
+- [x] Configurar o ícone do aplicativo no `AndroidManifest.xml` e na estrutura de mipmaps/adaptive-icon utilizando o ativo `app_icon.png` e fundo neutro compatível.
+- [x] Validar a alternância dinâmica entre tema claro e tema escuro no dispositivo sem perdas de estado ou problemas de contraste nos pictogramas.
+
+## Refatoração 11: Otimização do Cadastro de Placas e Busca na ARASAAC (Spec 2.2, 2.4 e Plan 5, 7.6.1)
+- [ ] Atualizar o fluxo do botão "Buscar na ARASAAC" no diálogo de placa para pré-preencher o campo de busca e disparar a consulta quando o campo "Nome da Placa" já possuir texto preenchido.
+- [ ] Redesenhar `dialog_plate_editor.xml` para despoluir a interface em blocos visuais limpos (Identificação, Mídias e Categorização).
+- [ ] Incluir seletor de categorias no diálogo de cadastro de placas permitindo associar opcionalmente a nova placa a categorias existentes no momento de sua criação.
+- [ ] Atualizar o fluxo de persistência (`SavePlateUseCase` / `PlateRepository`) para salvar transacionalmente os vínculos da placa com as categorias em `PlateProfileCrossRef`.
+- [ ] Criar testes unitários para a pré-alimentação da busca ARASAAC e para a persistência da relação placa-categoria no ato da criação.
+
+## Refatoração 12: Customização e Toggles do Modo de Uso no Menu Centralizado (Spec 2.3, 3.1, 3.3 e Plan 7.1, 7.3, 7.5)
+- [ ] Adicionar ao `PreferencesManager` e `UserPreferences` os estados persistidos para exibição opcional da barra de busca e de categorias no Modo de Uso (`showSearchInUseMode` e `showCategoriesInUseMode`).
+- [ ] Adicionar no `dialog_main_menu.xml`, aninhados ao seletor de modo, os dois switches de personalização do Modo de Uso.
+- [ ] Adicionar o contêiner de categorias na tela inicial (`activity_main.xml`).
+- [ ] Implementar a lógica reativa de visibilidade na `MainActivity` para que a barra de busca e as categorias respeitem as preferências ativas durante o Modo de Uso.
+- [ ] Criar testes unitários e de UI para validar o comportamento reativo dos novos toggles e a retenção de estado nas preferências.

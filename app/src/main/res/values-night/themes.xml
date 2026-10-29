@@ -1,7 +1,43 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme (Modo Escuro / Night). -->
     <style name="Base.Theme.EloSonoro" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Brand Colors -->
+        <item name="colorPrimary">@color/md_primary</item>
+        <item name="colorOnPrimary">@color/md_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md_on_primary_container</item>
+
+        <!-- Secondary Colors -->
+        <item name="colorSecondary">@color/md_secondary</item>
+        <item name="colorOnSecondary">@color/md_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/md_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/md_on_secondary_container</item>
+
+        <!-- Tertiary Colors -->
+        <item name="colorTertiary">@color/md_tertiary</item>
+        <item name="colorOnTertiary">@color/md_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/md_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/md_on_tertiary_container</item>
+
+        <!-- Surface and Background -->
+        <item name="android:colorBackground">@color/md_background</item>
+        <item name="colorOnBackground">@color/md_on_background</item>
+        <item name="colorSurface">@color/md_surface</item>
+        <item name="colorOnSurface">@color/md_on_surface</item>
+        <item name="colorSurfaceVariant">@color/md_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/md_on_surface_variant</item>
+
+        <!-- Error Colors -->
+        <item name="colorError">@color/color_error</item>
+        <item name="colorOnError">@color/black</item>
+        <item name="colorErrorContainer">@color/color_error_container</item>
+
+        <!-- System Bars -->
+        <item name="android:statusBarColor">@color/md_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/md_surface</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
+
+    <style name="Theme.EloSonoro" parent="Base.Theme.EloSonoro" />
 </resources>

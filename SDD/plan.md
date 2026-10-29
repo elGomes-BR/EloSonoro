@@ -9,7 +9,7 @@ Plano de implementação técnica.
 * **Camadas da Aplicação:**
   * **Data:** Room Database, DAOs, Entidades, Gerenciador de Arquivos (`LocalFileManager`), Cliente Retrofit da API ARASAAC, `PreferencesManager` e Implementações de Repositórios.
   * **Domain:** Modelos de Domínio, Interfaces de Repositórios e Casos de Uso (Use Cases) encapsulando as regras de negócio.
-  * **UI:** Activities, Adapters (`RecyclerView`), ViewModels e UI States gerenciados via `StateFlow`.
+  * **UI:** Activities, Adapters (`RecyclerView`), ViewModels, Diálogos modais e UI States gerenciados via `StateFlow` com suporte ao Material Design 3 e Temas Claro/Escuro.
 
 ## 2. Modelagem de Dados e Persistência (Room Database)
 A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria em segundo plano e à restrição da Constituição de isolamento de mídias (apenas Strings com URIs locais, zero BLOBs).
@@ -104,12 +104,13 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 
 ## 5. Integração com API Externa (ARASAAC)
 * **Cliente de Rede:** Retrofit 2 + OkHttp + Gson/Moshi Converter.
-* **Fluxo de Busca, Download e Sugestão Gramatical:**
-  1. O usuário digita o termo de busca na tela de pesquisa de pictogramas.
-  2. O `ArasaacApiService` realiza a consulta GET ao endpoint público de busca (`/pictograms/{locale}/search/{term}`).
-  3. A lista de resultados é exibida em grade no diálogo de seleção ARASAAC contendo os pictogramas e seus respectivos termos/palavras-chave em português.
-  4. Ao selecionar um pictograma, o repositório baixa assincronamente o stream de bytes da imagem (`/pictograms/{id}`) e o salva no armazenamento interno via `LocalFileManager`.
-  5. **Sugestão de Nome:** A URI local resultante e o nome/termo do pictograma sugerido pela API são retornados ao formulário de cadastro/edição da placa, preenchendo automaticamente o campo "Nome" com a primeira letra capitalizada para maior corretude gramatical e agilidade.
+* **Fluxo de Busca com Parâmetro Inicial, Download e Sugestão Gramatical (Spec 2.2):**
+  1. O diálogo de busca ARASAAC recebe um parâmetro opcional `initialQuery: String?`.
+  2. Ao ser acionado a partir do diálogo de cadastro/edição de placa, se o campo `edtPlateName` contiver texto, este valor é passado como `initialQuery`, preenchendo automaticamente o campo de busca `edtArasaacQuery` e acionando de imediato a consulta com debounce.
+  3. O `ArasaacApiService` realiza a consulta GET ao endpoint público de busca (`/pictograms/{locale}/search/{term}`).
+  4. A lista de resultados é exibida em grade no diálogo de seleção ARASAAC contendo os pictogramas e seus respectivos termos/palavras-chave em português.
+  5. Ao selecionar um pictograma, o repositório baixa assincronamente o stream de bytes da imagem (`/pictograms/{id}`) e o salva no armazenamento interno via `LocalFileManager`.
+  6. **Sugestão de Nome:** A URI local resultante e o nome/termo do pictograma sugerido pela API são retornados ao formulário de cadastro/edição da placa, preenchendo automaticamente o campo "Nome" com a primeira letra capitalizada para maior corretude gramatical e agilidade.
 
 ## 6. Sincronização, Empacotamento e Backup
 * **Exportação (`BackupManager`):**
@@ -122,68 +123,83 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 
 ## 7. Controle de UI, Estados e Acessibilidade Motora
 
-### 7.1 Gestão de Estados de Operação (`ModeState`), Ícones e Visibilidade Reativa
+### 7.1 Gestão de Estados de Operação (`ModeState`), Ícones e Preferências do Usuário
 * **Estados de Operação e Metáfora Visual:**
-  * **Modo de Uso (`isEditMode = false`):** Interface focada unicamente na prancha de comunicação. Controles administrativos, barra de pesquisa, botão de adicionar placa e ações de exclusão/edição permanecem estritamente ocultos (`View.GONE`). Representado pelo ícone de **cadeado fechado** (`ic_lock_closed`).
-  * **Modo Edição (`isEditMode = true`):** Habilita ferramentas de edição, exibindo a barra de busca inteligente, o botão flutuante de adicionar placas (`fabAddPlate`) e os controles de edição/exclusão de itens. Representado pelo ícone de **cadeado aberto** (`ic_lock_open`).
+  * **Modo de Uso (`isEditMode = false`):** Interface focada prioritariamente na prancha de comunicação. Controles administrativos, criação e edição de placas e categorias permanecem desabilitados/ocultos. Representado pelo ícone de **cadeado fechado** (`ic_lock_closed`).
+  * **Modo Edição (`isEditMode = true`):** Habilita ferramentas de edição, exibindo a barra de busca inteligente, o botão flutuante de adicionar placas (`fabAddPlate`), gerenciamento de categorias e controles de edição/exclusão de itens. Representado pelo ícone de **cadeado aberto** (`ic_lock_open`).
 * **Exibição na Tela Inicial:**
   * A tela principal exibe apenas o ícone representativo do modo atual (cadeado fechado ou cadeado aberto), eliminando rótulos de texto redundantes da tela inicial para evitar poluição visual.
-* **Componente Unificado no Menu Centralizado:**
-  * No menu de configurações/navegação, o status do modo e o controle de alternância são consolidados em um componente unificado (toggle/switch) com texto descritivo e ícone de cadeado.
+* **Componente Unificado no Menu Centralizado com Toggles Aninhados:**
+  * No menu centralizado, o status do modo e o controle de alternância são consolidados em um componente unificado (toggle/switch) com texto descritivo e ícone de cadeado.
+  * Aninhados ao toggle de modo, disponibilizam-se dois controles adicionais persistidos em `UserPreferences` (`PreferencesManager`):
+    * `showSearchInUseModeFlow: StateFlow<Boolean>` / `setShowSearchInUseMode(Boolean)`
+    * `showCategoriesInUseModeFlow: StateFlow<Boolean>` / `setShowCategoriesInUseMode(Boolean)`
 * **Emissão e Reatividade:**
-  * O estado é mantido em `UserPreferences` (`PreferencesManager`) e emitido reativamente via `isEditModeFlow: StateFlow<Boolean>`, atualizando dinamicamente a interface via `BoardUiState`.
+  * O `BoardViewModel` expõe um `BoardUiState` consolidado, refletindo reativamente as alterações de modo e visibilidade em tempo real.
 
 ### 7.2 Grade de Acessibilidade Motora e Seletor de Densidade
 * A prancha principal utiliza `RecyclerView` com `GridLayoutManager`.
 * **Layouts Permitidos:** A grade de exibição suporta estritamente **2 colunas** (ampla área de toque para usuários com dificuldades motoras ou acuidade visual reduzida), **4 colunas** (densidade padrão) ou **6 colunas** (densidade máxima), com suporte à rolagem vertical contínua.
 * **Ação Rápida no Menu:** A densidade da grade é alternável pelo usuário através de ação rápida no Menu Centralizado, sendo persistida via `PreferencesManager` e observada reativamente via `spanCountFlow: StateFlow<Int>`.
 
-### 7.3 Menu Centralizado de Controle e Navegação (`MainMenuBottomSheetDialogFragment` / Diálogo de Menu)
+### 7.3 Menu Centralizado de Controle e Navegação (`dialog_main_menu.xml`)
 * **Arquitetura e Acionamento:**
   * Janela modal centralizada (Bottom Sheet Dialog ou Dialog modal) acionada por um botão discreto e dedicado de fácil alcance na tela principal (`btnOpenMenu`).
 * **Componentes Migrados e Centralizados no Menu:**
   1. **Seletor de Densidade (Colunas):** Ação rápida permitindo ao usuário comutar instantaneamente a grade entre 2, 4 ou 6 colunas via `viewModel.setSpanCount(2|4|6)`.
-  2. **Seletor de Modo (Uso/Edição):** Componente toggle unificado integrando status textual ("Modo de Uso" / "Modo de Edição") e ícone de cadeado (fechado / aberto), disparando `viewModel.toggleEditMode()`.
+  2. **Seletor de Modo (Uso/Edição) e Toggles Aninhados:**
+     * Toggle principal unificado com texto descritivo ("Modo de Uso" / "Modo de Edição") e ícone de cadeado (fechado / aberto).
+     * Sub-container aninhado contendo dois `MaterialSwitch`:
+       - `switchShowSearchInUse`: "Exibir barra de pesquisa no Modo de Uso" (chave `key_show_search_in_use_mode`).
+       - `switchShowCategoriesInUse`: "Exibir categorias na tela inicial no Modo de Uso" (chave `key_show_categories_in_use_mode`).
   3. **Seletor de Categorias (Perfis):** Listagem interativa contendo a opção padrão "Todas as Placas" e os perfis cadastrados para filtragem da prancha principal. No Modo Edição, disponibiliza atalhos para criação e gerenciamento de categorias.
 
 ### 7.4 Ajuste de Layout, Margens de Segurança e Touch Targets
 * **Afastamento das Bordas Físicas e Barras de Sistema:**
   * `activity_main.xml` e os layouts principais recebem margens internas (`padding`) e externas (`margins`) significativamente ampliadas nas extremidades superior (topo) e inferior (base).
-  * O botão de acesso ao "Menu Centralizado" e o botão "Adicionar Nova Placa" (`fabAddPlate`) são posicionados com recuo de segurança reforçado (touch margins de segurança) em relação aos limites da tela.
+  * O botão de acesso ao "Menu Centralizado" e o botão "Adicionar Nova Placa" (`fabAddPlate`) são posicionados com recuo de segurança reforçado em relação aos limites da tela.
   * Isolamento contra interferência e acionamentos acidentais decorrentes de gestos ou toques próximos à barra de status (topo) e à barra de navegação/gestos do sistema operacional (base).
 
-### 7.5 Pesquisa Inteligente com Visibilidade Condicional
-* Barra de busca na prancha principal filtrando a lista de placas em tempo real pelo atributo `name`.
-* O `BoardViewModel` processa a consulta via Flow reativo conectado ao `PlateDao`.
-* **Regra de Visibilidade Estrita:** A barra de busca (`inputLayoutSearch`) tem sua visibilidade atrelada a `BoardUiState.isEditMode`. Quando `isEditMode == false`, o container da busca é ocultado (`View.GONE`), reaparecendo (`View.VISIBLE`) apenas quando `isEditMode == true`.
+### 7.5 Pesquisa Inteligente e Categorias com Visibilidade Condicional
+* **Visibilidade da Barra de Busca (`inputLayoutSearch`):**
+  * Visível (`View.VISIBLE`) quando: `isEditMode == true || showSearchInUseMode == true`.
+  * Oculta (`View.GONE`) quando: `isEditMode == false && showSearchInUseMode == false`.
+* **Visibilidade do Carrossel de Categorias na Tela Inicial:**
+  * A tela principal (`activity_main.xml`) possui um contêiner horizontal de chips de categorias abaixo da AppBar.
+  * Visível (`View.VISIBLE`) quando: `isEditMode == true || showCategoriesInUseMode == true`.
+  * Oculto (`View.GONE`) quando: `isEditMode == false && showCategoriesInUseMode == false`.
+* **Filtragem Reativa:** O `BoardViewModel` processa a consulta de busca e a categoria ativa via flows reativos combinados conectados ao `PlateDao` e `CrossRefDao`.
 
-### 7.6 Gestão de Placas e Perfis: Telas, Validações e Ciclo de Vida (Seções 2.4 e 2.5 da Spec)
+### 7.6 Gestão de Placas e Perfis: Telas, Validações e Ciclo de Vida (Spec 2.4 e 2.5)
 
-#### 7.6.1 Gestão de Placas
-* **Cadastro de Placas:**
-  * Validação síncrona obrigatória do campo `name` (bloqueia submissão e emite alerta visual se vazio).
-  * Formatação automática do nome (primeira letra maiúscula, demais minúsculas) para garantir leitura natural pelo TTS.
-  * Seleção de imagem (Galeria, Câmera, ARASAAC com preenchimento automático de termo) e áudio (gravação limitada a no máximo 5 segundos ou seleção), salvando fisicamente no armazenamento interno antes de persistir no banco.
-* **Edição de Placas:**
-  * Permite alteração do nome (com sanitização e capitalização), substituição ou remoção de imagem e áudio (com gravação limitada a 5 segundos).
-  * Se a mídia for substituída ou removida, o sistema deleta fisicamente o arquivo anterior do dispositivo e grava a nova mídia internamente antes de atualizar o Room.
-* **Remoção de Placas:**
-  * Diálogo de confirmação para exclusão da placa.
-  * Ao confirmar, exclui o registro no banco Room e apaga obrigatoriamente todos os arquivos físicos de mídia (`imageUri` e `audioUri`) vinculados.
+#### 7.6.1 Gestão de Placas e Formulário Despoluído
+* **Layout Despoluído (`dialog_plate_editor.xml`):**
+  * Organização estruturada em blocos visuais (`MaterialCardView`):
+    1. *Identificação:* Campo do Nome da Placa com validação obrigatória.
+    2. *Mídia Visual:* Pré-visualização com botões compactos de Galeria e ARASAAC (com preenchimento automático de consulta).
+    3. *Mídia Sonora:* Gravador com limite de 5s, seletor de arquivo e botão de teste.
+    4. *Categorização:* Componente seletor de categoria (`ExposedDropdownMenu` / Chips de categorias cadastradas) permitindo associar a placa a uma ou mais categorias no ato de sua criação.
+* **Fluxo de Persistência Transacional:**
+  * `SavePlateUseCase` / `PlateRepository` recebem os dados da placa e a lista de IDs de categorias selecionadas (`categoryIds: List<String>`).
+  * A operação grava fisicamente a mídia no armazenamento interno, insere a `PlateEntity` no Room e registra os vínculos em `PlateProfileCrossRef` de forma transacional.
+* **Edição e Exclusão de Placas:**
+  * Na substituição ou exclusão de placa, remove fisicamente todos os arquivos de mídia associados do armazenamento interno.
 
 #### 7.6.2 Gestão de Perfis (Categorias)
-* **Cadastro de Perfis:**
-  * Validação do campo `name` (obrigatório, não vazio e único no banco). Bloqueio e mensagem explícita de erro em caso de duplicidade (`SQLiteConstraintException`).
-  * Listagem de seleção alimentada pela totalidade das placas cadastradas no sistema (`PlateRepository.getAllPlates()`), independente de filtros ativos na tela principal.
-* **Edição de Perfis:**
-  * Permite renomear a categoria (mantendo as regras de validação e unicidade) e gerenciar os vínculos (adicionar ou remover placas associadas).
-  * Exibe todas as placas cadastradas no sistema, com pré-seleção marcada para as placas atualmente vinculadas ao perfil.
-* **Filtro de Busca na Seleção de Placas:**
-  * Campo de busca integrado ao diálogo de criação/edição de perfil permitindo filtrar placas em tempo real pelo atributo `name`.
-  * O `PlateSelectionAdapter` gerencia a filtragem da lista visível mantendo íntegro o conjunto de IDs selecionados (`selectedIds: MutableSet<String>`), garantindo que itens marcados não sejam desmarcados ao serem ocultados pelo filtro.
-* **Atalho para Criação Rápida de Placa:**
-  * Botão de atalho no diálogo de criação/edição de perfil ("Nova Placa") acionando o formulário de cadastro de placa.
-  * Ao concluir o cadastro, a nova placa é persistida fisicamente e inserida no Room, sendo imediatamente inserida e marcada como selecionada na listagem de vínculos do perfil.
-* **Deleção de Perfis:**
-  * Diálogo de confirmação de exclusão da categoria.
-  * Ao deletar o perfil, todos os vínculos com placas são desfeitos via `CrossRefDao` / `ForeignKey.CASCADE` na tabela associativa, **sem deletar as placas associadas do banco de dados** (proibição estrita de efeito cascata nas placas).
+* **Cadastro de Perfis:** Validação estrita de unicidade do nome com mensagem amigável para `SQLiteConstraintException`.
+* **Listagem Global e Atalho Rápido:** Listagem de seleção com todas as placas do sistema e atalho para criação rápida de placa durante a edição do perfil.
+* **Deleção Segura:** A exclusão de perfil remove vínculos na tabela associativa sem deletar as placas (`PlateEntity` permanece intacta).
+
+### 7.7 Identidade Visual e Configuração de Ícone (Spec 3.5)
+* **Ativo Mestre Oficial:** Imagem oficial fornecida salva em `app/src/main/res/drawable/app_icon.png` (512x512 px).
+* **Configuração no Android:**
+  * No `AndroidManifest.xml`, configurar `android:icon="@drawable/app_icon"` e `android:roundIcon="@drawable/app_icon"`.
+  * Estruturar o `mipmap-anydpi-v26/ic_launcher.xml` e `ic_launcher_round.xml` utilizando a imagem `app_icon.png` centralizada com camada de fundo correspondente à tonalidade do logotipo (`#F8F7EE`), garantindo renderização nítida sem distorções ou cortes indesejados em qualquer launcher Android.
+
+### 7.8 Temas Claro e Escuro (Material Design 3 - Spec 3.5)
+* **Temas em XML:**
+  * `app/src/main/res/values/themes.xml` (Tema Claro base).
+  * `app/src/main/res/values-night/themes.xml` (Tema Escuro base).
+* **Tokens Semânticos de Cor:**
+  * Configuração consistente dos tokens de cores (`colorPrimary`, `colorOnPrimary`, `colorSurface`, `colorOnSurface`, `mode_use_badge`, `mode_use_badge_bg`, etc.).
+  * Validação de contraste de acordo com os padrões de acessibilidade WCAG AAA/AA, assegurando que pictogramas, textos e botões tenham destaque visual perfeito tanto no modo diurno quanto no modo noturno.

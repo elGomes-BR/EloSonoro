@@ -27,16 +27,19 @@ Fluxo condicional executado ao tocar em uma placa:
 ### 2.2 Gerenciamento de Imagens Externas e Sugestão Gramatical
 * Integração com API ARASAAC para pesquisa de pictogramas. O sistema deve baixar a imagem, salvá-la fisicamente e registrar a URI no banco de dados, em conformidade com as regras de persistência.
 * **Sugestão Automática de Nome:** Ao selecionar um pictograma da API ARASAAC, o sistema deve alterar automaticamente o campo "Nome" da placa no formulário de cadastro/edição para o termo sugerido pela API (formatado com a primeira letra capitalizada), garantindo maior corretude gramatical e agilidade.
+* **Pré-preenchimento da Busca ARASAAC a partir do Nome:** Ao acionar a ação "Buscar na ARASAAC" no diálogo de cadastro ou edição de placa, caso o campo "Nome da Placa" já contenha texto preenchido, o valor deste campo deve preencher automaticamente a barra de pesquisa do diálogo da ARASAAC e disparar a consulta inicial imediatamente, poupando digitação redundante pelo usuário.
 
 ### 2.3 Pesquisa Inteligente e Gerenciamento de Visibilidade
 * O sistema deve prover uma barra de busca capaz de filtrar e localizar placas rapidamente pelo atributo "Nome" na visualização principal.
-* **Gerenciamento de Visibilidade Condicionado ao Modo:** A exibição da barra de pesquisa na prancha principal é estritamente condicionada ao `ModeState`.
-  * **Modo de Uso (`isEditMode = false`):** A barra de busca deve ser totalmente ocultada da tela principal para eliminar sobrecarga cognitiva e distrações visuais para usuários.
-  * **Modo Edição (`isEditMode = true`):** A barra de busca é reativada e exibida na tela principal para permitir a rápida localização, edição e gestão de placas por cuidadores e pedagogos.
+* **Gerenciamento de Visibilidade Condicionado ao Modo e Preferências:** A exibição da barra de pesquisa na prancha principal é condicionada ao `ModeState` e às preferências de exibição do Modo de Uso:
+  * **Modo de Uso (`isEditMode = false`):** Por padrão, a barra de busca é ocultada da tela principal para eliminar sobrecarga cognitiva e distrações visuais para usuários. Caso o toggle "Exibir barra de pesquisa no Modo de Uso" seja ativado no Menu Centralizado, a barra de pesquisa torna-se visível na tela inicial mesmo durante o Modo de Uso.
+  * **Modo Edição (`isEditMode = true`):** A barra de busca é sempre exibida na tela principal para permitir a rápida localização, edição e gestão de placas por cuidadores e pedagogos.
 
 ### 2.4 Cadastro de Placas
+* **Interface Despoluída e Organização Visual:** O formulário de cadastro e edição de placas deve possuir layout limpo e despoluído, agrupando os campos em seções modulares claras (Identificação, Mídia e Categorização) com controles visuais organizados.
 * **Entradas Exigidas:** Nome (Texto, obrigatório).
-* **Entradas Opcionais:** Imagem (URI), Áudio de Voz (URI).
+* **Entradas Opcionais:** Imagem (URI), Áudio de Voz (URI), Vínculo a Categorias Existentes.
+* **Seletor de Categoria na Criação da Placa:** O formulário de criação de placas deve incluir um componente seletor de categorias já cadastradas no sistema. Caso o usuário deseje, pode vincular a nova placa a uma ou mais categorias no momento da sua criação, criando atomicamente os vínculos correspondentes na tabela de relacionamento (`PlateProfileCrossRef`) ao salvar a placa.
 * **Regras de Validação e Formatação:** O sistema deve bloquear a operação de salvar e emitir um alerta visual se o campo "Nome" estiver vazio. Ao salvar o cadastro ou edição, o nome é sanitizado e gravado em minúsculo com a primeira letra capitalizada para evitar soletração pelo TTS.
 * **Gravação de Áudio:** Os áudios gravados pelo usuário não devem ultrapassar a duração máxima de 5 segundos. O sistema deve gerenciar e limitar a gravação para que não exceda esse tempo limite.
 * **Processamento I/O no Cadastro:** Ao confirmar o cadastro, se houver mídia associada (capturada pela câmera, selecionada da galeria ou baixada da API), o sistema deve obrigatoriamente copiar o arquivo para o diretório interno privado do aplicativo antes de persistir o registro no banco de dados.
@@ -54,7 +57,7 @@ Fluxo condicional executado ao tocar em uma placa:
 ## 3. Estados de Interface, Menu Centralizado e Acessibilidade
 
 ### 3.1 Modo de Operação (Uso vs Edição)
-* **Modo de Uso (`isEditMode = false`):** Interface otimizada exclusivamente para comunicação. Ações de criação, edição e exclusão de placas e categorias são bloqueadas/desabilitadas. Representado visualmente pela metáfora de um **cadeado fechado**.
+* **Modo de Uso (`isEditMode = false`):** Interface otimizada exclusivamente para comunicação. Ações de criação, edição e exclusão de placas e categorias são bloqueadas/desabilitadas. Representado visualmente pela metáfora de um **cadeado fechado**. Elementos adicionais como barra de busca e listagem de categorias na prancha principal são configuráveis através de toggles aninhados no Menu Centralizado (desativados por padrão).
 * **Modo de Edição (`isEditMode = true`):** Habilita criação, edição, deleção de placas e categorias, além do gerenciamento de vínculos, reativando a barra de pesquisa na tela principal e o botão de adicionar nova placa. Representado visualmente pelo ícone de um **cadeado aberto**.
 * **Exibição do Ícone de Estado na Tela Inicial:** Na tela inicial/principal do aplicativo, deve ser exibido **estritamente o ícone representativo do estado atual de operação** (cadeado fechado no Modo de Uso ou cadeado aberto no Modo Edição), sem elementos textuais adicionais de modo que gerem sobrecarga visual.
 * **Seletor de Modo Unificado no Menu:** Dentro do menu centralizado, a caixa de texto indicadora de status e o controle de alternância são unificados em um único componente de interface (toggle/switch) com o texto correspondente e o respectivo ícone (cadeado fechado / cadeado aberto), mantendo a reatividade e a emissão de estado via `isEditModeFlow`.
@@ -68,13 +71,23 @@ Fluxo condicional executado ao tocar em uma placa:
 * O sistema deve prover uma janela de menu centralizada (implementada via Bottom Sheet Dialog ou Dialog modal) acessível através de um botão discreto e dedicado na tela principal.
 * O Menu Centralizado migra e unifica os controles de configuração e navegação para despoluir a prancha principal:
   1. **Seletor de Densidade (Colunas):** Ação rápida permitindo ao usuário alternar a grade de exibição (`spanCount`) do `RecyclerView` estritamente entre 2, 4 ou 6 colunas.
-  2. **Seletor de Modo (Uso/Edição):** Componente unificado (toggle) com texto descritivo do status e ícone de cadeado (fechado para Modo de Uso, aberto para Modo Edição), gerenciando a alternância com emissão via `isEditModeFlow`.
+  2. **Seletor de Modo (Uso/Edição) e Toggles Aninhados de Customização:** Componente unificado (toggle) com texto descritivo do status e ícone de cadeado (fechado para Modo de Uso, aberto para Modo Edição), gerenciando a alternância com emissão via `isEditModeFlow`. Aninhados a este controle, o menu disponibiliza dois toggles para personalização da tela inicial durante o Modo de Uso:
+     * *Exibir barra de pesquisa no Modo de Uso:* ativa/desativa a barra de pesquisa de placas por nome na tela inicial durante o Modo de Uso (padrão: desativado).
+     * *Exibir categorias na tela inicial no Modo de Uso:* ativa/desativa a exibição do carrossel/barra de categorias na tela inicial durante o Modo de Uso (padrão: desativado).
   3. **Seletor de Categorias (Perfis):** Listagem de seleção de categorias para filtrar a prancha principal, incluindo a opção de exibir "Todas as Placas" e, quando no Modo Edição, opções para criação/edição de perfis.
 
 ### 3.4 Margens de Segurança e Zonas de Toque (Touch Targets)
 * Os arquivos de layout da prancha principal devem aplicar margens internas (`padding`) e externas (`margins`) significativamente ampliadas nas extremidades do topo e da base da tela.
 * Os botões de ação ("Adicionar Nova Placa" e o próprio botão de abertura do "Menu Centralizado") não devem ficar encostados nas bordas físicas do dispositivo.
 * Todos os botões e áreas interativas devem ser posicionados com recuo e margem de segurança adequados em relação às zonas de interferência da barra de status e da barra de navegação/gestos do sistema operacional Android, prevenindo toques acidentais e saídas indesejadas do aplicativo.
+
+### 3.5 Identidade Visual e Temas Claro/Escuro
+* **Ícone Oficial do Aplicativo (Launcher Icon):**
+  * O aplicativo deve utilizar inicialmente a imagem oficial em PNG fornecida pelo projeto (`res/drawable/app_icon.png`, 512x512 px) contendo o logotipo estilizado do EloSonoro.
+  * O ícone deve ser configurado como o identificador visual padrão (`android:icon`) e circular (`android:roundIcon`) do aplicativo no sistema operacional, assegurando enquadramento adequado sem cortes indesejados nas bordas circulares ou arredondadas dos inicializadores do Android.
+* **Temas Claro e Escuro (Material Design 3):**
+  * O sistema deve oferecer suporte integral aos temas Claro (Light) e Escuro (Dark), mantendo conformidade com as diretrizes de acessibilidade e alto contraste para CAA (WCAG AAA/AA).
+  * A paleta de cores deve garantir a preservação da legibilidade dos pictogramas, dos estados de foco e dos elementos visuais da prancha em ambos os modos.
 
 ## 4. Integração e Sincronização
 
