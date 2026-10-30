@@ -107,8 +107,8 @@ Lista de tarefas pendentes.
 - [x] Criar testes unitários para a pré-alimentação da busca ARASAAC e para a persistência da relação placa-categoria no ato da criação.
 
 ## Refatoração 12: Customização e Toggles do Modo de Uso no Menu Centralizado (Spec 2.3, 3.1, 3.3 e Plan 7.1, 7.3, 7.5)
-- [ ] Adicionar ao `PreferencesManager` e `UserPreferences` os estados persistidos para exibição opcional da barra de busca e de categorias no Modo de Uso (`showSearchInUseMode` e `showCategoriesInUseMode`).
-- [ ] Adicionar no `dialog_main_menu.xml`, aninhados ao seletor de modo, os dois switches de personalização do Modo de Uso.
-- [ ] Adicionar o contêiner de categorias na tela inicial (`activity_main.xml`).
-- [ ] Implementar a lógica reativa de visibilidade na `MainActivity` para que a barra de busca e as categorias respeitem as preferências ativas durante o Modo de Uso.
-- [ ] Criar testes unitários e de UI para validar o comportamento reativo dos novos toggles e a retenção de estado nas preferências.
+- [x] Adicionar ao `PreferencesManager` e `UserPreferences` os estados persistidos para exibição opcional da barra de busca e de categorias no Modo de Uso (`showSearchInUseMode` e `showCategoriesInUseMode`).
+- [x] Adicionar no `dialog_main_menu.xml`, aninhados ao seletor de modo, os dois switches de personalização do Modo de Uso.
+- [x] Adicionar o contêiner de categorias na tela inicial (`activity_main.xml`).
+- [x] Implementar a lógica reativa de visibilidade na `MainActivity` para que a barra de busca e as categorias respeitem as preferências ativas durante o Modo de Uso.
+- [x] Criar testes unitários e de UI para validar o comportamento reativo dos novos toggles e a retenção de estado nas preferências.

@@ -14,5 +14,9 @@ data class BoardUiState(
     val spanCount: Int = 4,
     val searchQuery: String = "",
     val isLoading: Boolean = false,
-    val userMessage: String? = null
+    val userMessage: String? = null,
+    /** Barra de busca visível no Modo de Uso quando verdadeiro (Spec 2.3) */
+    val showSearchInUseMode: Boolean = false,
+    /** Carrossel de categorias visível no Modo de Uso quando verdadeiro (Spec 3.1) */
+    val showCategoriesInUseMode: Boolean = false
 )

@@ -240,6 +240,89 @@ class BoardViewModelTest {
         assertEquals(1, fakePlateRepository.platesList.size)
     }
 
+    @Test
+    fun testSetShowSearchInUseModeUpdatesState() = runTest(testDispatcher) {
+        // Valor padrão: false (Spec 2.3)
+        assertFalse(viewModel.uiState.value.showSearchInUseMode)
+
+        viewModel.setShowSearchInUseMode(true)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showSearchInUseMode)
+
+        viewModel.setShowSearchInUseMode(false)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.showSearchInUseMode)
+    }
+
+    @Test
+    fun testSetShowCategoriesInUseModeUpdatesState() = runTest(testDispatcher) {
+        // Valor padrão: false (Spec 3.1)
+        assertFalse(viewModel.uiState.value.showCategoriesInUseMode)
+
+        viewModel.setShowCategoriesInUseMode(true)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showCategoriesInUseMode)
+
+        viewModel.setShowCategoriesInUseMode(false)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.showCategoriesInUseMode)
+    }
+
+    @Test
+    fun testSearchVisibilityLogic_ModoUsoShowSearchFalse_DeveFicarOculto() = runTest(testDispatcher) {
+        // Modo de Uso (isEditMode=false) + showSearchInUseMode=false → busca GONE (Spec 2.3 e Plan 7.5)
+        fakePreferencesManager.setEditMode(false)
+        fakePreferencesManager.setShowSearchInUseMode(false)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isEditMode)
+        assertFalse(state.showSearchInUseMode)
+        // Lógica: isEditMode || showSearchInUseMode → false || false = false (GONE)
+        assertFalse(state.isEditMode || state.showSearchInUseMode)
+    }
+
+    @Test
+    fun testSearchVisibilityLogic_ModoUsoShowSearchTrue_DeveEstarVisivel() = runTest(testDispatcher) {
+        // Modo de Uso (isEditMode=false) + showSearchInUseMode=true → busca VISIBLE (Spec 2.3 e Plan 7.5)
+        fakePreferencesManager.setEditMode(false)
+        fakePreferencesManager.setShowSearchInUseMode(true)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isEditMode)
+        assertTrue(state.showSearchInUseMode)
+        // Lógica: isEditMode || showSearchInUseMode → false || true = true (VISIBLE)
+        assertTrue(state.isEditMode || state.showSearchInUseMode)
+    }
+
+    @Test
+    fun testCategoriesVisibilityLogic_ModoEdicao_DeveEstarSempreVisivel() = runTest(testDispatcher) {
+        // No Modo de Edição, categorias sempre visíveis independente do toggle (Plan 7.5)
+        fakePreferencesManager.setEditMode(true)
+        fakePreferencesManager.setShowCategoriesInUseMode(false)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isEditMode)
+        // Lógica: isEditMode || showCategoriesInUseMode → true || false = true (VISIBLE)
+        assertTrue(state.isEditMode || state.showCategoriesInUseMode)
+    }
+
+    @Test
+    fun testCategoriesVisibilityLogic_ModoUsoShowCategoriesFalse_DeveFicarOculto() = runTest(testDispatcher) {
+        // Modo de Uso + showCategoriesInUseMode=false → categorias GONE (Spec 3.1 e Plan 7.5)
+        fakePreferencesManager.setEditMode(false)
+        fakePreferencesManager.setShowCategoriesInUseMode(false)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isEditMode)
+        assertFalse(state.showCategoriesInUseMode)
+        // Lógica: isEditMode || showCategoriesInUseMode → false || false = false (GONE)
+        assertFalse(state.isEditMode || state.showCategoriesInUseMode)
+    }
+
     // Fakes para teste da UI
     private class FakePlateRepository : PlateRepository {
         val platesList = mutableListOf<PlateEntity>()
@@ -346,6 +429,12 @@ class BoardViewModelTest {
         private val _selectedProfileIdFlow = MutableStateFlow(selectedProfileId)
         override val selectedProfileIdFlow: StateFlow<String?> = _selectedProfileIdFlow.asStateFlow()
 
+        private val _showSearchInUseModeFlow = MutableStateFlow(false)
+        override val showSearchInUseModeFlow: StateFlow<Boolean> = _showSearchInUseModeFlow.asStateFlow()
+
+        private val _showCategoriesInUseModeFlow = MutableStateFlow(false)
+        override val showCategoriesInUseModeFlow: StateFlow<Boolean> = _showCategoriesInUseModeFlow.asStateFlow()
+
         override fun getSpanCount(): Int = spanCount
         override fun setSpanCount(spanCount: Int) {
             this.spanCount = spanCount
@@ -366,6 +455,10 @@ class BoardViewModelTest {
             this.selectedProfileId = profileId
             _selectedProfileIdFlow.value = profileId
         }
+        override fun isShowSearchInUseMode(): Boolean = _showSearchInUseModeFlow.value
+        override fun setShowSearchInUseMode(show: Boolean) { _showSearchInUseModeFlow.value = show }
+        override fun isShowCategoriesInUseMode(): Boolean = _showCategoriesInUseModeFlow.value
+        override fun setShowCategoriesInUseMode(show: Boolean) { _showCategoriesInUseModeFlow.value = show }
     }
 
     private class FakeFileManager : FileManager {

@@ -254,6 +254,12 @@ class BoardAccessibilityRefactorTest {
         private val _selectedProfileIdFlow = MutableStateFlow(selectedProfileId)
         override val selectedProfileIdFlow: StateFlow<String?> = _selectedProfileIdFlow.asStateFlow()
 
+        private val _showSearchInUseModeFlow = MutableStateFlow(false)
+        override val showSearchInUseModeFlow: StateFlow<Boolean> = _showSearchInUseModeFlow.asStateFlow()
+
+        private val _showCategoriesInUseModeFlow = MutableStateFlow(false)
+        override val showCategoriesInUseModeFlow: StateFlow<Boolean> = _showCategoriesInUseModeFlow.asStateFlow()
+
         override fun getSpanCount(): Int = spanCount
         override fun setSpanCount(spanCount: Int) {
             val validSpan = if (spanCount in listOf(2, 4, 6)) spanCount else 4
@@ -275,5 +281,9 @@ class BoardAccessibilityRefactorTest {
             this.selectedProfileId = profileId
             _selectedProfileIdFlow.value = profileId
         }
+        override fun isShowSearchInUseMode(): Boolean = _showSearchInUseModeFlow.value
+        override fun setShowSearchInUseMode(show: Boolean) { _showSearchInUseModeFlow.value = show }
+        override fun isShowCategoriesInUseMode(): Boolean = _showCategoriesInUseModeFlow.value
+        override fun setShowCategoriesInUseMode(show: Boolean) { _showCategoriesInUseModeFlow.value = show }
     }
 }

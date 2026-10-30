@@ -10,6 +10,10 @@ interface UserPreferences {
     val spanCountFlow: StateFlow<Int>
     val isEditModeFlow: StateFlow<Boolean>
     val selectedProfileIdFlow: StateFlow<String?>
+    /** Exibe a barra de busca no Modo de Uso quando verdadeiro (Spec 2.3) */
+    val showSearchInUseModeFlow: StateFlow<Boolean>
+    /** Exibe o carrossel de categorias no Modo de Uso quando verdadeiro (Spec 3.1) */
+    val showCategoriesInUseModeFlow: StateFlow<Boolean>
     fun getSpanCount(): Int
     fun setSpanCount(spanCount: Int)
     fun isEditMode(): Boolean
@@ -17,6 +21,10 @@ interface UserPreferences {
     fun toggleEditMode(): Boolean
     fun getSelectedProfileId(): String?
     fun setSelectedProfileId(profileId: String?)
+    fun isShowSearchInUseMode(): Boolean
+    fun setShowSearchInUseMode(show: Boolean)
+    fun isShowCategoriesInUseMode(): Boolean
+    fun setShowCategoriesInUseMode(show: Boolean)
 }
 
 /**
@@ -36,6 +44,8 @@ class PreferencesManager(
         private const val KEY_SPAN_COUNT = "key_span_count"
         private const val KEY_IS_EDIT_MODE = "key_is_edit_mode"
         private const val KEY_SELECTED_PROFILE_ID = "key_selected_profile_id"
+        private const val KEY_SHOW_SEARCH_IN_USE_MODE = "key_show_search_in_use_mode"
+        private const val KEY_SHOW_CATEGORIES_IN_USE_MODE = "key_show_categories_in_use_mode"
 
         const val DEFAULT_SPAN_COUNT = 4
     }
@@ -58,6 +68,16 @@ class PreferencesManager(
         sharedPreferences.getString(KEY_SELECTED_PROFILE_ID, null)
     )
     override val selectedProfileIdFlow: StateFlow<String?> = _selectedProfileId.asStateFlow()
+
+    private val _showSearchInUseMode = MutableStateFlow(
+        sharedPreferences.getBoolean(KEY_SHOW_SEARCH_IN_USE_MODE, false)
+    )
+    override val showSearchInUseModeFlow: StateFlow<Boolean> = _showSearchInUseMode.asStateFlow()
+
+    private val _showCategoriesInUseMode = MutableStateFlow(
+        sharedPreferences.getBoolean(KEY_SHOW_CATEGORIES_IN_USE_MODE, false)
+    )
+    override val showCategoriesInUseModeFlow: StateFlow<Boolean> = _showCategoriesInUseMode.asStateFlow()
 
     override fun getSpanCount(): Int = _spanCount.value
 
@@ -85,5 +105,19 @@ class PreferencesManager(
     override fun setSelectedProfileId(profileId: String?) {
         sharedPreferences.edit().putString(KEY_SELECTED_PROFILE_ID, profileId).apply()
         _selectedProfileId.value = profileId
+    }
+
+    override fun isShowSearchInUseMode(): Boolean = _showSearchInUseMode.value
+
+    override fun setShowSearchInUseMode(show: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_SHOW_SEARCH_IN_USE_MODE, show).apply()
+        _showSearchInUseMode.value = show
+    }
+
+    override fun isShowCategoriesInUseMode(): Boolean = _showCategoriesInUseMode.value
+
+    override fun setShowCategoriesInUseMode(show: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_SHOW_CATEGORIES_IN_USE_MODE, show).apply()
+        _showCategoriesInUseMode.value = show
     }
 }

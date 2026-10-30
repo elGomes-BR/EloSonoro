@@ -40,6 +40,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.flow.collectLatest
@@ -64,6 +65,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var imgModeIndicator: ImageView
     private lateinit var btnOpenMenu: MaterialButton
     private lateinit var layoutSearchContainer: LinearLayout
+    private lateinit var layoutCategoriesContainer: android.widget.HorizontalScrollView
+    private lateinit var chipGroupMainCategories: ChipGroup
     private lateinit var fabAddPlate: ExtendedFloatingActionButton
     private lateinit var edtSearch: TextInputEditText
     private lateinit var txtEmptyState: TextView
@@ -117,6 +120,8 @@ class MainActivity : AppCompatActivity() {
         imgModeIndicator = findViewById(R.id.imgModeIndicator)
         btnOpenMenu = findViewById(R.id.btnOpenMenu)
         layoutSearchContainer = findViewById(R.id.layoutSearchContainer)
+        layoutCategoriesContainer = findViewById(R.id.layoutCategoriesContainer)
+        chipGroupMainCategories = findViewById(R.id.chipGroupMainCategories)
         fabAddPlate = findViewById(R.id.fabAddPlate)
         edtSearch = findViewById(R.id.edtSearch)
         txtEmptyState = findViewById(R.id.txtEmptyState)
@@ -193,19 +198,32 @@ class MainActivity : AppCompatActivity() {
             recyclerPlates.adapter?.notifyDataSetChanged()
         }
 
-        // Atualiza visual do Modo de Operação (Cadeado Fechado / Aberto) e Visibilidade Condicional da Busca
+        // Atualiza visual do Modo de Operação (Cadeado Fechado / Aberto)
         if (state.isEditMode) {
             imgModeIndicator.setImageResource(R.drawable.ic_lock_open)
             imgModeIndicator.setColorFilter(ContextCompat.getColor(this, R.color.mode_edit_badge))
             imgModeIndicator.contentDescription = getString(R.string.mode_edit)
-            layoutSearchContainer.visibility = View.VISIBLE
             fabAddPlate.visibility = View.VISIBLE
         } else {
             imgModeIndicator.setImageResource(R.drawable.ic_lock_closed)
             imgModeIndicator.setColorFilter(ContextCompat.getColor(this, R.color.mode_use_badge))
             imgModeIndicator.contentDescription = getString(R.string.mode_use)
-            layoutSearchContainer.visibility = View.GONE
             fabAddPlate.visibility = View.GONE
+        }
+
+        // Visibilidade reativa da busca (Spec 2.3 e Plan 7.5):
+        // Visível no Modo de Edição OU quando showSearchInUseMode está ativo no Modo de Uso
+        layoutSearchContainer.visibility =
+            if (state.isEditMode || state.showSearchInUseMode) View.VISIBLE else View.GONE
+
+        // Visibilidade reativa do carrossel de categorias (Spec 3.1 e Plan 7.5):
+        // Visível no Modo de Edição OU quando showCategoriesInUseMode está ativo no Modo de Uso
+        layoutCategoriesContainer.visibility =
+            if (state.isEditMode || state.showCategoriesInUseMode) View.VISIBLE else View.GONE
+
+        // Renderiza chips de categorias na barra horizontal quando visível
+        if (layoutCategoriesContainer.visibility == View.VISIBLE) {
+            renderMainBoardCategories(state.profiles, state.selectedProfileId)
         }
 
         // Mensagens ao usuário
@@ -228,12 +246,15 @@ class MainActivity : AppCompatActivity() {
         val cardModeToggle: com.google.android.material.card.MaterialCardView = dialog.findViewById(R.id.cardModeToggle) ?: return
         val imgModeLock: ImageView = dialog.findViewById(R.id.imgModeLock) ?: return
         val txtModeStatus: TextView = dialog.findViewById(R.id.txtModeStatus) ?: return
-        val switchMode: com.google.android.material.materialswitch.MaterialSwitch = dialog.findViewById(R.id.switchMode) ?: return
+        val switchMode: MaterialSwitch = dialog.findViewById(R.id.switchMode) ?: return
         val toggleGroupSpan: com.google.android.material.button.MaterialButtonToggleGroup = dialog.findViewById(R.id.toggleGroupSpan) ?: return
         val chipGroupMenuCategories: ChipGroup = dialog.findViewById(R.id.chipGroupMenuCategories) ?: return
         val chipMenuAllPlates: Chip = dialog.findViewById(R.id.chipMenuAllPlates) ?: return
         val chipMenuAddCategory: Chip = dialog.findViewById(R.id.chipMenuAddCategory) ?: return
         val btnCloseMenu: MaterialButton = dialog.findViewById(R.id.btnCloseMenu) ?: return
+        val containerUseModeToggles: LinearLayout = dialog.findViewById(R.id.containerUseModeToggles) ?: return
+        val switchShowSearchInUse: MaterialSwitch = dialog.findViewById(R.id.switchShowSearchInUse) ?: return
+        val switchShowCategoriesInUse: MaterialSwitch = dialog.findViewById(R.id.switchShowCategoriesInUse) ?: return
 
         fun updateModeToggleVisual(isEdit: Boolean) {
             if (isEdit) {
@@ -244,6 +265,8 @@ class MainActivity : AppCompatActivity() {
                 cardModeToggle.setCardBackgroundColor(ContextCompat.getColor(this, R.color.mode_edit_badge_bg))
                 cardModeToggle.strokeColor = ContextCompat.getColor(this, R.color.mode_edit_badge)
                 switchMode.isChecked = true
+                // Sub-container de personalização oculto no Modo de Edição (Spec 3.3)
+                containerUseModeToggles.visibility = View.GONE
             } else {
                 imgModeLock.setImageResource(R.drawable.ic_lock_closed)
                 imgModeLock.setColorFilter(ContextCompat.getColor(this, R.color.mode_use_badge))
@@ -252,11 +275,27 @@ class MainActivity : AppCompatActivity() {
                 cardModeToggle.setCardBackgroundColor(ContextCompat.getColor(this, R.color.mode_use_badge_bg))
                 cardModeToggle.strokeColor = ContextCompat.getColor(this, R.color.mode_use_badge)
                 switchMode.isChecked = false
+                // Exibe sub-container de personalização apenas no Modo de Uso (Spec 3.3)
+                containerUseModeToggles.visibility = View.VISIBLE
             }
         }
 
         val currentState = viewModel.uiState.value
         updateModeToggleVisual(currentState.isEditMode)
+
+        // Estado inicial dos switches de personalização do Modo de Uso
+        switchShowSearchInUse.isChecked = currentState.showSearchInUseMode
+        switchShowCategoriesInUse.isChecked = currentState.showCategoriesInUseMode
+
+        // Listener: alternar visibilidade da busca no Modo de Uso (Plan 7.3)
+        switchShowSearchInUse.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setShowSearchInUseMode(isChecked)
+        }
+
+        // Listener: alternar visibilidade de categorias no Modo de Uso (Plan 7.3)
+        switchShowCategoriesInUse.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setShowCategoriesInUseMode(isChecked)
+        }
 
         cardModeToggle.setOnClickListener {
             val newMode = viewModel.toggleEditMode()
@@ -361,6 +400,35 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             chipGroup.addView(chip, if (insertIndex >= 0) insertIndex else chipGroup.childCount)
+        }
+    }
+
+    /**
+     * Renderiza chips de categorias na barra horizontal da tela principal (Spec 3.1 e Plan 7.5).
+     * Exibida no Modo de Edição ou quando showCategoriesInUseMode está ativo.
+     * Apenas seleção — sem ações de edição/exclusão (simplificado para Modo de Uso).
+     */
+    private fun renderMainBoardCategories(profiles: List<ProfileEntity>, selectedProfileId: String?) {
+        chipGroupMainCategories.removeAllViews()
+
+        // Chip "Todas as Placas"
+        val chipAll = Chip(this, null, com.google.android.material.R.style.Widget_Material3_Chip_Filter).apply {
+            text = getString(R.string.all_plates)
+            isCheckable = true
+            isChecked = (selectedProfileId == null)
+            setOnClickListener { viewModel.selectProfile(null) }
+        }
+        chipGroupMainCategories.addView(chipAll)
+
+        // Chips de perfis/categorias (somente seleção, sem edição)
+        profiles.forEach { profile ->
+            val chip = Chip(this, null, com.google.android.material.R.style.Widget_Material3_Chip_Filter).apply {
+                text = profile.name
+                isCheckable = true
+                isChecked = (profile.id == selectedProfileId)
+                setOnClickListener { viewModel.selectProfile(profile.id) }
+            }
+            chipGroupMainCategories.addView(chip)
         }
     }
 

@@ -80,7 +80,9 @@ class BoardViewModel(
         preferencesManager.isEditModeFlow,
         preferencesManager.spanCountFlow,
         _isLoading,
-        _userMessage
+        _userMessage,
+        preferencesManager.showSearchInUseModeFlow,
+        preferencesManager.showCategoriesInUseModeFlow
     ) { params: Array<Any?> ->
         @Suppress("UNCHECKED_CAST")
         val profilesWithPlates = params[0] as List<com.example.elosonoro.data.local.model.ProfileWithPlates>
@@ -92,6 +94,8 @@ class BoardViewModel(
         val spanCount = params[5] as Int
         val isLoading = params[6] as Boolean
         val userMessage = params[7] as String?
+        val showSearchInUseMode = params[8] as Boolean
+        val showCategoriesInUseMode = params[9] as Boolean
 
         // Se houver pesquisa ativa dentro de uma categoria específica, filtra por nome
         val filteredPlates = if (selectedProfileId != null && query.isNotBlank()) {
@@ -110,7 +114,9 @@ class BoardViewModel(
             spanCount = spanCount,
             searchQuery = query,
             isLoading = isLoading,
-            userMessage = userMessage
+            userMessage = userMessage,
+            showSearchInUseMode = showSearchInUseMode,
+            showCategoriesInUseMode = showCategoriesInUseMode
         )
     }.stateIn(
         scope = viewModelScope,
@@ -141,6 +147,14 @@ class BoardViewModel(
 
     fun setSpanCount(spanCount: Int) {
         preferencesManager.setSpanCount(spanCount)
+    }
+
+    fun setShowSearchInUseMode(show: Boolean) {
+        preferencesManager.setShowSearchInUseMode(show)
+    }
+
+    fun setShowCategoriesInUseMode(show: Boolean) {
+        preferencesManager.setShowCategoriesInUseMode(show)
     }
 
     fun onPlateClicked(plate: PlateEntity) {
