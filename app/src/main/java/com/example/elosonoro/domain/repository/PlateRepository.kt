@@ -1,6 +1,7 @@
 package com.example.elosonoro.domain.repository
 
 import com.example.elosonoro.data.local.entity.PlateEntity
+import com.example.elosonoro.data.local.entity.ProfileEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -22,13 +23,20 @@ interface PlateRepository {
      * @param imageUri URI ou caminho da imagem (opcional). Se for externo/temporário, será copiado para filesDir.
      * @param audioUri URI ou caminho do áudio (opcional). Se for externo/temporário, será copiado para filesDir.
      * @param id ID opcional da placa (se nulo, um novo UUID é gerado).
+     * @param categoryIds Lista opcional de IDs de categorias para vínculo transacional via PlateProfileCrossRef.
      */
     suspend fun savePlate(
         name: String,
         imageUri: String? = null,
         audioUri: String? = null,
-        id: String? = null
+        id: String? = null,
+        categoryIds: List<String>? = null
     ): Result<PlateEntity>
+
+    /**
+     * Retorna as categorias associadas a uma determinada placa.
+     */
+    fun getProfilesForPlate(plateId: String): Flow<List<ProfileEntity>>
 
     /**
      * Remove a placa do banco de dados e apaga seus arquivos físicos de mídia correspondentes.

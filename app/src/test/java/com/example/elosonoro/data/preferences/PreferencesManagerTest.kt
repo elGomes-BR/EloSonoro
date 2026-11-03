@@ -75,6 +75,70 @@ class PreferencesManagerTest {
         assertEquals(null, preferencesManager.getSelectedProfileId())
     }
 
+    @Test
+    fun testShowSearchInUseModeDefaultFalse() {
+        // Valor padrão deve ser false (Spec 2.3)
+        assertFalse(preferencesManager.isShowSearchInUseMode())
+        assertFalse(fakePrefs.getBoolean("key_show_search_in_use_mode", false))
+    }
+
+    @Test
+    fun testSetShowSearchInUseModePersiste() {
+        // Ativação persiste em SharedPreferences e no flow
+        preferencesManager.setShowSearchInUseMode(true)
+        assertTrue(preferencesManager.isShowSearchInUseMode())
+        assertTrue(fakePrefs.getBoolean("key_show_search_in_use_mode", false))
+
+        // Desativação persiste
+        preferencesManager.setShowSearchInUseMode(false)
+        assertFalse(preferencesManager.isShowSearchInUseMode())
+        assertFalse(fakePrefs.getBoolean("key_show_search_in_use_mode", false))
+    }
+
+    @Test
+    fun testShowCategoriesInUseModeDefaultFalse() {
+        // Valor padrão deve ser false (Spec 3.1)
+        assertFalse(preferencesManager.isShowCategoriesInUseMode())
+        assertFalse(fakePrefs.getBoolean("key_show_categories_in_use_mode", false))
+    }
+
+    @Test
+    fun testSetShowCategoriesInUseModePersiste() {
+        // Ativação persiste em SharedPreferences e no flow
+        preferencesManager.setShowCategoriesInUseMode(true)
+        assertTrue(preferencesManager.isShowCategoriesInUseMode())
+        assertTrue(fakePrefs.getBoolean("key_show_categories_in_use_mode", false))
+
+        // Desativação persiste
+        preferencesManager.setShowCategoriesInUseMode(false)
+        assertFalse(preferencesManager.isShowCategoriesInUseMode())
+        assertFalse(fakePrefs.getBoolean("key_show_categories_in_use_mode", false))
+    }
+
+    @Test
+    fun testShowSearchInUseModeFlowEmiteAtualizacoes() {
+        // Flow deve refletir o estado atual
+        assertFalse(preferencesManager.showSearchInUseModeFlow.value)
+
+        preferencesManager.setShowSearchInUseMode(true)
+        assertTrue(preferencesManager.showSearchInUseModeFlow.value)
+
+        preferencesManager.setShowSearchInUseMode(false)
+        assertFalse(preferencesManager.showSearchInUseModeFlow.value)
+    }
+
+    @Test
+    fun testShowCategoriesInUseModeFlowEmiteAtualizacoes() {
+        // Flow deve refletir o estado atual
+        assertFalse(preferencesManager.showCategoriesInUseModeFlow.value)
+
+        preferencesManager.setShowCategoriesInUseMode(true)
+        assertTrue(preferencesManager.showCategoriesInUseModeFlow.value)
+
+        preferencesManager.setShowCategoriesInUseMode(false)
+        assertFalse(preferencesManager.showCategoriesInUseModeFlow.value)
+    }
+
     private class FakeSharedPreferences : SharedPreferences {
         private val storage = mutableMapOf<String, Any?>()
 

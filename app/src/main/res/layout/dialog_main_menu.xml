@@ -122,8 +122,34 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 2. SEÇÃO: Densidade da Grade (2, 4 ou 6 colunas) -->
-    <TextView
+    <!-- Sub-container: Toggles de Personalização do Modo de Uso (aninhados ao seletor de modo, Spec 3.3 e Plan 7.1) -->
+    <LinearLayout
+        android:id="@+id/containerUseModeToggles"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="8dp"
+        android:layout_marginBottom="20dp"
+        android:visibility="gone">
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchShowSearchInUse"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/show_search_in_use_mode"
+            android:textSize="13sp"
+            android:paddingVertical="8dp" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchShowCategoriesInUse"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/show_categories_in_use_mode"
+            android:textSize="13sp"
+            android:paddingVertical="8dp" />
+    </LinearLayout>
+
+    <!-- 2. SEÇÃO: Densidade da Grade (2, 4 ou 6 colunas) -->    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/section_density_title"

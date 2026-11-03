@@ -190,7 +190,16 @@ class BoardAccessibilityRefactorTest {
         override fun searchPlates(query: String): Flow<List<PlateEntity>> =
             flowOf(plates.filter { it.name.contains(query, ignoreCase = true) })
 
-        override suspend fun savePlate(name: String, imageUri: String?, audioUri: String?, id: String?): Result<PlateEntity> {
+        override fun getProfilesForPlate(plateId: String): Flow<List<com.example.elosonoro.data.local.entity.ProfileEntity>> =
+            flowOf(emptyList())
+
+        override suspend fun savePlate(
+            name: String,
+            imageUri: String?,
+            audioUri: String?,
+            id: String?,
+            categoryIds: List<String>?
+        ): Result<PlateEntity> {
             val plate = PlateEntity(id = id ?: "pl-${plates.size + 1}", name = name, imageUri = imageUri, audioUri = audioUri)
             plates.add(plate)
             return Result.success(plate)
@@ -245,6 +254,12 @@ class BoardAccessibilityRefactorTest {
         private val _selectedProfileIdFlow = MutableStateFlow(selectedProfileId)
         override val selectedProfileIdFlow: StateFlow<String?> = _selectedProfileIdFlow.asStateFlow()
 
+        private val _showSearchInUseModeFlow = MutableStateFlow(false)
+        override val showSearchInUseModeFlow: StateFlow<Boolean> = _showSearchInUseModeFlow.asStateFlow()
+
+        private val _showCategoriesInUseModeFlow = MutableStateFlow(false)
+        override val showCategoriesInUseModeFlow: StateFlow<Boolean> = _showCategoriesInUseModeFlow.asStateFlow()
+
         override fun getSpanCount(): Int = spanCount
         override fun setSpanCount(spanCount: Int) {
             val validSpan = if (spanCount in listOf(2, 4, 6)) spanCount else 4
@@ -266,5 +281,9 @@ class BoardAccessibilityRefactorTest {
             this.selectedProfileId = profileId
             _selectedProfileIdFlow.value = profileId
         }
+        override fun isShowSearchInUseMode(): Boolean = _showSearchInUseModeFlow.value
+        override fun setShowSearchInUseMode(show: Boolean) { _showSearchInUseModeFlow.value = show }
+        override fun isShowCategoriesInUseMode(): Boolean = _showCategoriesInUseModeFlow.value
+        override fun setShowCategoriesInUseMode(show: Boolean) { _showCategoriesInUseModeFlow.value = show }
     }
 }

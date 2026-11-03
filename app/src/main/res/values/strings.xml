@@ -17,6 +17,8 @@
     <string name="section_mode_title">Modo de Operação</string>
     <string name="section_density_title">Densidade da Grade</string>
     <string name="section_categories_title">Categorias</string>
+    <string name="show_search_in_use_mode">Exibir barra de pesquisa no Modo de Uso</string>
+    <string name="show_categories_in_use_mode">Exibir categorias na tela inicial no Modo de Uso</string>
     <string name="name_required">O nome é obrigatório</string>
     <string name="save">Salvar</string>
     <string name="cancel">Cancelar</string>

@@ -1,8 +1,11 @@
 package com.example.elosonoro.data.repository
 
 import android.net.Uri
+import com.example.elosonoro.data.local.dao.CrossRefDao
 import com.example.elosonoro.data.local.dao.PlateDao
 import com.example.elosonoro.data.local.entity.PlateEntity
+import com.example.elosonoro.data.local.entity.PlateProfileCrossRef
+import com.example.elosonoro.data.local.entity.ProfileEntity
 import com.example.elosonoro.data.media.FileManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -22,6 +25,7 @@ class PlateRepositoryTest {
 
     private lateinit var fakePlateDao: FakePlateDao
     private lateinit var fakeFileManager: FakeFileManager
+    private lateinit var fakeCrossRefDao: FakeCrossRefDao
     private lateinit var repository: PlateRepositoryImpl
     private val testDispatcher = StandardTestDispatcher()
 
@@ -29,9 +33,11 @@ class PlateRepositoryTest {
     fun setUp() {
         fakePlateDao = FakePlateDao()
         fakeFileManager = FakeFileManager()
+        fakeCrossRefDao = FakeCrossRefDao()
         repository = PlateRepositoryImpl(
             plateDao = fakePlateDao,
             fileManager = fakeFileManager,
+            crossRefDao = fakeCrossRefDao,
             ioDispatcher = testDispatcher
         )
     }
@@ -242,6 +248,51 @@ class PlateRepositoryTest {
         assertEquals("Quero brincar", fakePlateDao.plates.last().name)
     }
 
+    @Test
+    fun testSavePlateWithCategoryIdsPersistsRelationsInCrossRefDao() = runTest(testDispatcher) {
+        val result = repository.savePlate(
+            name = "Comida",
+            categoryIds = listOf("cat-1", "cat-2")
+        )
+
+        assertTrue(result.isSuccess)
+        val saved = result.getOrNull()
+        assertNotNull(saved)
+        assertEquals("Comida", saved?.name)
+
+        val plateCrossRefs = fakeCrossRefDao.crossRefs.filter { it.plateId == saved?.id }
+        assertEquals(2, plateCrossRefs.size)
+        assertTrue(plateCrossRefs.any { it.profileId == "cat-1" })
+        assertTrue(plateCrossRefs.any { it.profileId == "cat-2" })
+    }
+
+    @Test
+    fun testEditPlateUpdatingCategoriesReplacesOldRelations() = runTest(testDispatcher) {
+        val plate = PlateEntity(id = "p-1", name = "Brinquedo")
+        fakePlateDao.plates.add(plate)
+        fakeCrossRefDao.crossRefs.add(PlateProfileCrossRef(plateId = "p-1", profileId = "cat-old"))
+
+        val result = repository.savePlate(
+            id = "p-1",
+            name = "Brinquedo Atualizado",
+            categoryIds = listOf("cat-new-1", "cat-new-2")
+        )
+
+        assertTrue(result.isSuccess)
+        val plateCrossRefs = fakeCrossRefDao.crossRefs.filter { it.plateId == "p-1" }
+        assertEquals(2, plateCrossRefs.size)
+        assertFalse(plateCrossRefs.any { it.profileId == "cat-old" })
+        assertTrue(plateCrossRefs.any { it.profileId == "cat-new-1" })
+        assertTrue(plateCrossRefs.any { it.profileId == "cat-new-2" })
+    }
+
+    @Test
+    fun testSavePlateWithoutCategoriesDoesNotCreateCrossRefs() = runTest(testDispatcher) {
+        val result = repository.savePlate(name = "Água", categoryIds = emptyList())
+        assertTrue(result.isSuccess)
+        assertTrue(fakeCrossRefDao.crossRefs.isEmpty())
+    }
+
     // Fakes para teste desacoplado
     private class FakePlateDao : PlateDao {
         val plates = mutableListOf<PlateEntity>()
@@ -271,6 +322,43 @@ class PlateRepositoryTest {
         override fun searchPlatesByName(query: String): Flow<List<PlateEntity>> =
             flowOf(plates.filter { it.name.contains(query, ignoreCase = true) })
         override fun countPlates(): Flow<Int> = flowOf(plates.size)
+    }
+
+    private class FakeCrossRefDao : CrossRefDao {
+        val crossRefs = mutableListOf<PlateProfileCrossRef>()
+
+        override suspend fun insert(crossRef: PlateProfileCrossRef) {
+            crossRefs.removeAll { it.plateId == crossRef.plateId && it.profileId == crossRef.profileId }
+            crossRefs.add(crossRef)
+        }
+
+        override suspend fun insertAll(crossRefs: List<PlateProfileCrossRef>) {
+            crossRefs.forEach { insert(it) }
+        }
+
+        override suspend fun delete(crossRef: PlateProfileCrossRef) {
+            crossRefs.removeAll { it.plateId == crossRef.plateId && it.profileId == crossRef.profileId }
+        }
+
+        override suspend fun deleteRelation(profileId: String, plateId: String) {
+            crossRefs.removeAll { it.profileId == profileId && it.plateId == plateId }
+        }
+
+        override suspend fun deleteAllPlatesFromProfile(profileId: String) {
+            crossRefs.removeAll { it.profileId == profileId }
+        }
+
+        override suspend fun deleteAllProfilesFromPlate(plateId: String) {
+            crossRefs.removeAll { it.plateId == plateId }
+        }
+
+        override fun getPlatesForProfile(profileId: String): Flow<List<PlateEntity>> = flowOf(emptyList())
+        override suspend fun getPlatesForProfileSync(profileId: String): List<PlateEntity> = emptyList()
+        override fun getProfilesForPlate(plateId: String): Flow<List<ProfileEntity>> = flowOf(emptyList())
+        override fun getCrossRefsForProfile(profileId: String): Flow<List<PlateProfileCrossRef>> =
+            flowOf(crossRefs.filter { it.profileId == profileId })
+        override fun getCrossRefsForPlate(plateId: String): Flow<List<PlateProfileCrossRef>> =
+            flowOf(crossRefs.filter { it.plateId == plateId })
     }
 
     private class FakeFileManager : FileManager {
