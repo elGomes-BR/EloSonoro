@@ -58,7 +58,10 @@ Fluxo condicional executado ao tocar em uma placa:
 
 ### 3.1 Modo de Operação (Uso vs Edição)
 * **Modo de Uso (`isEditMode = false`):** Interface otimizada exclusivamente para comunicação. Ações de criação, edição e exclusão de placas e categorias são bloqueadas/desabilitadas. Representado visualmente pela metáfora de um **cadeado fechado**. Elementos adicionais como barra de busca e listagem de categorias na prancha principal são configuráveis através de toggles aninhados no Menu Centralizado (desativados por padrão).
-* **Modo de Edição (`isEditMode = true`):** Habilita criação, edição, deleção de placas e categorias, além do gerenciamento de vínculos, reativando a barra de pesquisa na tela principal e o botão de adicionar nova placa. Representado visualmente pelo ícone de um **cadeado aberto**.
+* **Acesso Protegido ao Menu no Modo de Uso (Clique Longo de 3s):** No Modo de Uso, o acesso ao menu da aplicação através do botão de menu (`btnOpenMenu`) ou do indicador de modo (`imgModeIndicator`) é protegido contra toques acidentais, exigindo um clique longo sustentado de **3 segundos (3.000 ms)**.
+  * *Toque Rápido / Cancelamento:* Caso o botão seja apenas tocado ou liberado antes de completar os 3 segundos contínuos, a contagem é abortada, o menu não se abre e o sistema apresenta um aviso orientativo ("Mantenha pressionado por 3 segundos para abrir o menu").
+  * *Sucesso:* Ao atingir 3 segundos contínuos de sustentação, o dispositivo emite feedback tátil (vibração háptica) e abre a janela do Menu Centralizado.
+* **Modo de Edição (`isEditMode = true`):** Habilita criação, edição, deleção de placas e categorias, além do gerenciamento de vínculos, reativando a barra de pesquisa na tela principal e o botão de adicionar nova placa. Representado visualmente pelo ícone de um **cadeado aberto**. No Modo Edição, o acesso ao Menu Centralizado é imediato através de clique simples (toque padrão) em `btnOpenMenu` ou `imgModeIndicator`.
 * **Exibição do Ícone de Estado na Tela Inicial:** Na tela inicial/principal do aplicativo, deve ser exibido **estritamente o ícone representativo do estado atual de operação** (cadeado fechado no Modo de Uso ou cadeado aberto no Modo Edição), sem elementos textuais adicionais de modo que gerem sobrecarga visual.
 * **Seletor de Modo Unificado no Menu:** Dentro do menu centralizado, a caixa de texto indicadora de status e o controle de alternância são unificados em um único componente de interface (toggle/switch) com o texto correspondente e o respectivo ícone (cadeado fechado / cadeado aberto), mantendo a reatividade e a emissão de estado via `isEditModeFlow`.
 
@@ -68,7 +71,7 @@ Fluxo condicional executado ao tocar em uma placa:
 * A comutação entre as densidades de 2, 4 ou 6 colunas é disponibilizada como uma ação rápida dentro do Menu Centralizado.
 
 ### 3.3 Menu Centralizado de Controle e Navegação
-* O sistema deve prover uma janela de menu centralizada (implementada via Bottom Sheet Dialog ou Dialog modal) acessível através de um botão discreto e dedicado na tela principal.
+* O sistema deve prover uma janela de menu centralizada (implementada via Bottom Sheet Dialog ou Dialog modal) acessível através de botão dedicado na tela principal (`btnOpenMenu`), respeitando a proteção de acionamento do modo ativo (clique longo de 3 segundos no Modo de Uso e clique simples no Modo Edição).
 * O Menu Centralizado migra e unifica os controles de configuração e navegação para despoluir a prancha principal:
   1. **Seletor de Densidade (Colunas):** Ação rápida permitindo ao usuário alternar a grade de exibição (`spanCount`) do `RecyclerView` estritamente entre 2, 4 ou 6 colunas.
   2. **Seletor de Modo (Uso/Edição) e Toggles Aninhados de Customização:** Componente unificado (toggle) com texto descritivo do status e ícone de cadeado (fechado para Modo de Uso, aberto para Modo Edição), gerenciando a alternância com emissão via `isEditModeFlow`. Aninhados a este controle, o menu disponibiliza dois toggles para personalização da tela inicial durante o Modo de Uso:

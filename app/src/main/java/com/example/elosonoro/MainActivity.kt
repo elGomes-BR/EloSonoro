@@ -8,6 +8,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -33,6 +35,7 @@ import com.example.elosonoro.ui.arasaac.ArasaacPictogramAdapter
 import com.example.elosonoro.ui.arasaac.ArasaacSearchViewModel
 import com.example.elosonoro.ui.board.BoardUiState
 import com.example.elosonoro.ui.board.BoardViewModel
+import com.example.elosonoro.ui.board.MenuAccessGatekeeper
 import com.example.elosonoro.ui.board.PlateAdapter
 import com.example.elosonoro.ui.board.PlateSelectionAdapter
 import com.google.android.material.button.MaterialButton
@@ -43,6 +46,8 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -71,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var edtSearch: TextInputEditText
     private lateinit var txtEmptyState: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var menuGatekeeper: MenuAccessGatekeeper
 
     // Image & Audio Picker Contracts
     private var pendingImagePreviewCallback: ((Uri) -> Unit)? = null
@@ -110,9 +116,97 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         initViews()
+        initGatekeeper()
         setupRecyclerView()
         setupListeners()
         observeUiState()
+    }
+
+    private fun initGatekeeper() {
+        menuGatekeeper = MenuAccessGatekeeper(
+            requiredDurationMs = 3000L,
+            isEditModeProvider = { viewModel.uiState.value.isEditMode },
+            onMenuTriggered = { showMainMenuDialog() },
+            onInstructionFeedback = {
+                Toast.makeText(this, R.string.menu_hold_instruction, Toast.LENGTH_SHORT).show()
+            },
+            onHapticFeedback = { triggerHapticFeedback(btnOpenMenu) }
+        )
+    }
+
+    private fun attachGatekeeperToView(view: View) {
+        var longPressJob: Job? = null
+
+        view.setOnTouchListener { v, event ->
+            val currentTime = System.currentTimeMillis()
+            val isEditMode = viewModel.uiState.value.isEditMode
+
+            if (isEditMode) {
+                return@setOnTouchListener false
+            }
+
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    menuGatekeeper.onTouchDown(currentTime)
+                    longPressJob?.cancel()
+                    longPressJob = lifecycleScope.launch {
+                        delay(menuGatekeeper.requiredDurationMs)
+                        menuGatekeeper.onDurationReached(System.currentTimeMillis())
+                    }
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (event.x < 0 || event.x > v.width || event.y < 0 || event.y > v.height) {
+                        longPressJob?.cancel()
+                        menuGatekeeper.onTouchCancel()
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    longPressJob?.cancel()
+                    menuGatekeeper.onTouchUp(currentTime)
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    longPressJob?.cancel()
+                    menuGatekeeper.onTouchCancel()
+                    true
+                }
+                else -> false
+            }
+        }
+
+        view.setOnClickListener {
+            menuGatekeeper.onDirectClick()
+        }
+    }
+
+    private fun triggerHapticFeedback(view: View) {
+        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        try {
+            val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                val vibratorManager = getSystemService(android.os.VibratorManager::class.java)
+                vibratorManager?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+            }
+            if (vibrator?.hasVibrator() == true) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(
+                        android.os.VibrationEffect.createOneShot(
+                            100,
+                            android.os.VibrationEffect.DEFAULT_AMPLITUDE
+                        )
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(100)
+                }
+            }
+        } catch (_: Exception) {
+            // Silencioso se vibrador não estiver acessível
+        }
     }
 
     private fun initViews() {
@@ -148,15 +242,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        // Botão para abrir o Menu Centralizado
-        btnOpenMenu.setOnClickListener {
-            showMainMenuDialog()
-        }
-
-        // Toque no ícone do modo também abre o Menu Centralizado
-        imgModeIndicator.setOnClickListener {
-            showMainMenuDialog()
-        }
+        // Proteção de acesso ao Menu Centralizado (clique longo de 3s no Modo de Uso vs clique simples no Modo Edição)
+        attachGatekeeperToView(btnOpenMenu)
+        attachGatekeeperToView(imgModeIndicator)
 
         // FAB Nova Placa (visível apenas no Modo Edição)
         fabAddPlate.setOnClickListener {

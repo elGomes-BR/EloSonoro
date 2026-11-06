@@ -112,3 +112,10 @@ Lista de tarefas pendentes.
 - [x] Adicionar o contêiner de categorias na tela inicial (`activity_main.xml`).
 - [x] Implementar a lógica reativa de visibilidade na `MainActivity` para que a barra de busca e as categorias respeitem as preferências ativas durante o Modo de Uso.
 - [x] Criar testes unitários e de UI para validar o comportamento reativo dos novos toggles e a retenção de estado nas preferências.
+
+## Melhoria de Acessibilidade 13: Acesso Protegido ao Menu por Clique Longo no Modo de Uso (Spec 3.1, 3.3 e Plan 7.3)
+- [x] Implementar mecanismo de detecção de toque com temporizador no `btnOpenMenu` e `imgModeIndicator`, exigindo clique longo sustentado de 3 segundos (3.000 ms) durante o Modo de Uso (`isEditMode == false`).
+- [x] Implementar cancelamento imediato do temporizador se o usuário soltar ou cancelar o toque antes de 3 segundos, exibindo feedback orientativo amigável em caso de toque simples ("Mantenha pressionado por 3 segundos para abrir o menu").
+- [x] Emitir feedback tátil (vibração háptica) e acionar a abertura do Menu Centralizado ao atingir os 3 segundos contínuos de sustentação no Modo de Uso.
+- [x] Assegurar que no Modo Edição (`isEditMode == true`) o acesso ao Menu Centralizado ocorra de forma imediata por clique simples.
+- [x] Criar testes unitários e de lógica de UI cobrindo o acionamento por clique longo no Modo de Uso, cancelamento antecipado com feedback e o clique imediato no Modo Edição.

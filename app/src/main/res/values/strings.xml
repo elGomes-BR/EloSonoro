@@ -13,6 +13,7 @@
     <string name="grid_columns_6">6 Colunas (Densidade Máxima)</string>
     <string name="menu_title">Menu de Opções</string>
     <string name="menu_button_desc">Abrir menu de opções</string>
+    <string name="menu_hold_instruction">Mantenha pressionado por 3 segundos para abrir o menu</string>
     <string name="mode_indicator_desc">Indicador do modo de operação atual</string>
     <string name="section_mode_title">Modo de Operação</string>
     <string name="section_density_title">Densidade da Grade</string>

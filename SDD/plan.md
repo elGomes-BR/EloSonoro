@@ -143,8 +143,14 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 * **Ação Rápida no Menu:** A densidade da grade é alternável pelo usuário através de ação rápida no Menu Centralizado, sendo persistida via `PreferencesManager` e observada reativamente via `spanCountFlow: StateFlow<Int>`.
 
 ### 7.3 Menu Centralizado de Controle e Navegação (`dialog_main_menu.xml`)
-* **Arquitetura e Acionamento:**
-  * Janela modal centralizada (Bottom Sheet Dialog ou Dialog modal) acionada por um botão discreto e dedicado de fácil alcance na tela principal (`btnOpenMenu`).
+* **Arquitetura e Acionamento com Gatekeeper no Modo de Uso:**
+  * Janela modal centralizada (Bottom Sheet Dialog ou Dialog modal) acionada pelo botão dedicado (`btnOpenMenu`) ou pelo ícone indicador de modo (`imgModeIndicator`).
+  * **Comportamento Condicionado ao Modo Ativo (Spec 3.1):**
+    * **No Modo Edição (`isEditMode == true`):** Abertura instantânea mediante clique simples (toque padrão).
+    * **No Modo de Uso (`isEditMode == false`):** Exige clique longo sustentado de **3 segundos (3.000 ms)**. A implementação gerencia eventos de toque (`MotionEvent.ACTION_DOWN`, `ACTION_UP`, `ACTION_CANCEL`) com temporizador assíncrono:
+      - Ao tocar (`ACTION_DOWN`), agenda a execução do menu para após 3.000 ms contínuos.
+      - Ao soltar (`ACTION_UP`) ou cancelar (`ACTION_CANCEL`) antes dos 3 segundos, o temporizador é cancelado; caso tenha sido um toque rápido, emite mensagem orientativa ("Mantenha pressionado por 3 segundos para abrir o menu").
+      - Ao atingir os 3 segundos contínuos de retenção, emite feedback tátil (vibração háptica) e invoca `showMainMenuDialog()`.
 * **Componentes Migrados e Centralizados no Menu:**
   1. **Seletor de Densidade (Colunas):** Ação rápida permitindo ao usuário comutar instantaneamente a grade entre 2, 4 ou 6 colunas via `viewModel.setSpanCount(2|4|6)`.
   2. **Seletor de Modo (Uso/Edição) e Toggles Aninhados:**
