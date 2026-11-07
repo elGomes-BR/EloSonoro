@@ -119,3 +119,6 @@ Lista de tarefas pendentes.
 - [x] Emitir feedback tátil (vibração háptica) e acionar a abertura do Menu Centralizado ao atingir os 3 segundos contínuos de sustentação no Modo de Uso.
 - [x] Assegurar que no Modo Edição (`isEditMode == true`) o acesso ao Menu Centralizado ocorra de forma imediata por clique simples.
 - [x] Criar testes unitários e de lógica de UI cobrindo o acionamento por clique longo no Modo de Uso, cancelamento antecipado com feedback e o clique imediato no Modo Edição.
+
+## Governança 14: Licenciamento do Repositório (Constitution 2, Spec 5.1 e Plan 7.9)
+- [x] Adicionar arquivo de licença `LICENSE` (MIT) na raiz do repositório com copyright formal em nome de Eduardo Gomes (2026).

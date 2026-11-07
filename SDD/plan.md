@@ -209,3 +209,7 @@ A modelagem atende à relação N:M entre Placas e Perfis/Categorias, telemetria
 * **Tokens Semânticos de Cor:**
   * Configuração consistente dos tokens de cores (`colorPrimary`, `colorOnPrimary`, `colorSurface`, `colorOnSurface`, `mode_use_badge`, `mode_use_badge_bg`, etc.).
   * Validação de contraste de acordo com os padrões de acessibilidade WCAG AAA/AA, assegurando que pictogramas, textos e botões tenham destaque visual perfeito tanto no modo diurno quanto no modo noturno.
+
+### 7.9 Licenciamento e Governança do Repositório (Spec 5.1)
+* **Arquivo de Licença:** Inclusão do arquivo `LICENSE` na raiz do repositório contendo o texto padrão da licença permissiva MIT.
+* **Cláusula de Copyright:** Registro do titular e ano de vigência (`Copyright (c) 2026 Eduardo Gomes`).

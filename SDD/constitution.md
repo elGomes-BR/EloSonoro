@@ -10,6 +10,7 @@ Aplicativo de comunicação alternativa (CAA) para usuários não verbais e com 
 * **Interface:** Material Design (com suporte nativo a Temas Claro e Escuro acessíveis).
 * **Banco de Dados:** Room Database.
 * **Text-to-Speech:** Sintetizador de voz nativo do Android (TTS).
+* **Licenciamento do Código-Fonte:** Licença MIT (código aberto permissivo).
 
 ## 3. Restrições Arquiteturais e Persistência
 * **Isolamento de Mídia:** Arquivos de imagem e áudio devem ser gravados fisicamente no diretório do sistema do aplicativo.

@@ -97,3 +97,10 @@ Fluxo condicional executado ao tocar em uma placa:
 ### 4.1 Exportação/Importação e Backup
 * O sistema deve possuir rotina de empacotamento que agrupa os registros do banco de dados (Room) e os arquivos de mídia físicos associados.
 * Este pacote deve ser transferível entre diferentes dispositivos para garantir sincronização pedagógica (professor-aluno) e atuar como mecanismo de backup estruturado.
+
+## 5. Governança e Licenciamento
+
+### 5.1 Licença de Software
+* O código-fonte do projeto é disponibilizado sob os termos da licença permissiva **MIT**.
+* O arquivo `LICENSE` deve residir na raiz do repositório, com a declaração explícita de copyright do ano de 2026 em nome de Eduardo Gomes (`Copyright (c) 2026 Eduardo Gomes`).
+* Mídias e recursos externos de terceiros (como os pictogramas da ARASAAC) permanecem sob seus respectivos termos e licenças de atribuição de conteúdo (ex.: CC BY-NC-SA 4.0), operando de forma compatível e não conflitante com a licença MIT do software.
